@@ -72,6 +72,10 @@ export interface PastVote {
 export interface CspanChannel {
   id: string;
   label: string;
+  /** Best-effort embeddable stream URL. */
+  embedUrl: string;
+  /** Canonical C-SPAN page to open in a new tab (always works). */
+  watchUrl: string;
 }
 
 export const CURRENT_SESSION = {
@@ -277,10 +281,29 @@ export const PAST_VOTES: PastVote[] = [
   { bill: "S. 1102", title: "Drug Import Safety Act", date: "Mar 1, 2026", conflictedVotes: 9, totalVotes: 44, finding: "9 of 44 NO voters received pharma industry donations exceeding $100K" },
 ];
 
+// C-SPAN's live network pages. embedUrl is the same live page; C-SPAN may send
+// anti-framing headers on some domains, so the UI always shows a visible
+// "open live feed" fallback link (watchUrl) that works regardless. Swap these
+// URLs here if a different stream renders better on the production domain.
 export const CSPAN_CHANNELS: CspanChannel[] = [
-  { id: "c-span-2", label: "Senate" },
-  { id: "c-span", label: "House" },
-  { id: "c-span-3", label: "C-SPAN 3" },
+  {
+    id: "c-span-2",
+    label: "Senate",
+    embedUrl: "https://www.c-span.org/networks/?channel=c-span-2",
+    watchUrl: "https://www.c-span.org/networks/?channel=c-span-2",
+  },
+  {
+    id: "c-span",
+    label: "House",
+    embedUrl: "https://www.c-span.org/networks/?channel=c-span",
+    watchUrl: "https://www.c-span.org/networks/?channel=c-span",
+  },
+  {
+    id: "c-span-3",
+    label: "C-SPAN 3",
+    embedUrl: "https://www.c-span.org/networks/?channel=c-span-3",
+    watchUrl: "https://www.c-span.org/networks/?channel=c-span-3",
+  },
 ];
 
 export const INDUSTRY_COLORS: Record<string, string> = {

@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import GlobalStyles from "./GlobalStyles";
+import VoteAlertButton, { readAlertOptIn } from "./VoteAlertButton";
+import { isVoteLive } from "@/lib/voteAlert";
 import {
   CURRENT_SESSION,
   ALL_VOTERS,
@@ -149,6 +151,7 @@ function VoteColumn({ label, votes, flashVote }: { label: string; votes: Voter[]
 
 /** C-SPAN embed — all 3 iframes rendered, visibility toggled (no remount flash) */
 function CSpanEmbed({ activeChannel, onChannelChange }: { activeChannel: string; onChannelChange: (id: string) => void }) {
+  const activeCspan = CSPAN_CHANNELS.find((c) => c.id === activeChannel) ?? CSPAN_CHANNELS[0];
   return (
     <div className="mb-5">
       <div className="flex items-center justify-between mb-2">
@@ -182,17 +185,47 @@ function CSpanEmbed({ activeChannel, onChannelChange }: { activeChannel: string;
         {CSPAN_CHANNELS.map((ch) => (
           <iframe
             key={ch.id}
-            src={`https://www.c-span.org/video/standalone/?channel=${ch.id}`}
+            src={ch.embedUrl}
             title={`C-SPAN ${ch.label} Live Feed`}
             className="absolute inset-0 w-full h-full"
             style={{ border: "none", display: activeChannel === ch.id ? "block" : "none" }}
-            allow="autoplay; encrypted-media"
+            allow="autoplay; encrypted-media; fullscreen"
             allowFullScreen
             loading="lazy"
           />
         ))}
+        {/* Fallback layer: sits BEHIND the iframe. If C-SPAN blocks framing the
+            iframe is transparent/empty and this shows through; if the video
+            loads it covers this. Either way the user gets a working path. */}
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-center px-4"
+          style={{ zIndex: -1, color: "var(--cream)" }}
+        >
+          <span className="inline-block w-2 h-2 rounded-full" style={{ background: "var(--red)", animation: "pulse-dot 1.5s ease-in-out infinite" }} aria-hidden="true" />
+          <p className="text-sm" style={{ opacity: 0.85 }}>Live {activeCspan?.label} floor feed</p>
+          <a
+            href={activeCspan?.watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs font-bold uppercase tracking-wider px-3 py-1.5"
+            style={{ background: "var(--cream)", color: "var(--ink)", textDecoration: "none", letterSpacing: "0.08em" }}
+          >
+            ▶ Watch on C-SPAN ↗
+          </a>
+        </div>
       </div>
-      <p className="caption mt-1">Source: C-SPAN — public domain broadcast</p>
+      <div className="flex items-center justify-between mt-1">
+        <p className="caption">Source: C-SPAN — public domain broadcast</p>
+        <a
+          href={activeCspan?.watchUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="caption"
+          style={{ color: "var(--blue)", fontWeight: 600 }}
+        >
+          Video not loading? Open live feed ↗
+        </a>
+      </div>
     </div>
   );
 }
@@ -522,6 +555,7 @@ export default function LobbyCam() {
   const extraIdx = useRef(0);
   const voteTimer = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const filingTimer = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const notifiedVoteId = useRef<number | null>(null);
 
   // Bootstrap: try live GovTrack data first, fall back to the mock simulation.
   // Either way, votes reveal one at a time via the same interval so the
@@ -605,6 +639,35 @@ export default function LobbyCam() {
     return () => clearInterval(filingTimer.current);
   }, []);
 
+  // Vote-alert poller (scaffolding). Every 60s, if a REAL GovTrack vote is
+  // live (created in the last 30 min) and the user opted into alerts, fire one
+  // local browser notification per vote. Only fires for real votes, so demo
+  // mode never spams. The full when-the-tab-is-closed system is deferred
+  // (PROGRESS.md, Tasks 15/28/29/32).
+  useEffect(() => {
+    async function checkForLiveVote() {
+      if (typeof window === "undefined") return;
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+      if (!readAlertOptIn()) return;
+      try {
+        const res = await fetch("/api/votes/live");
+        const json = (await res.json()) as LiveVotesResponse;
+        const v = json.vote;
+        if (json.source !== "govtrack" || !v || !isVoteLive(v.created)) return;
+        if (notifiedVoteId.current === v.id) return;
+        notifiedVoteId.current = v.id;
+        new Notification("🔴 Floor vote underway", {
+          body: `${v.billNumber ?? "A vote"} — ${v.question ?? "Senate floor vote"}. Open LOBBY CAM to watch it live.`,
+        });
+      } catch {
+        /* ignore transient poll failures */
+      }
+    }
+    checkForLiveVote();
+    const timer = setInterval(checkForLiveVote, 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
   const filteredMembers = useMemo(
     () => MEMBERS.filter((m) => m.name.toLowerCase().includes(searchQuery.toLowerCase())),
     [searchQuery]
@@ -679,6 +742,7 @@ export default function LobbyCam() {
                 {voteDataSource === "govtrack" ? "Live GovTrack Data" : "Demo Data"}
               </span>
             )}
+            <VoteAlertButton />
           </div>
         </div>
 

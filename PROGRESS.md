@@ -48,6 +48,8 @@ actually built. Updated as work lands.
 | 20 | Frontend wired to live vote API | 🟡 | Votes use `/api/votes/live` with demo fallback + a Live/Demo badge. Other zones still demo pending keys. |
 | 27 | Dynamic OG / Twitter card tags | 🟡 | `generateMetadata` on member pages (text tags done; card **image** is red-tier Task 23). |
 | 33 | SEO member profile pages | 🟡 | `/member/[slug]` statically pre-rendered for the featured members. Scales to all 537 once profiles read from the roster. |
+| 13 | C-SPAN live feed | 🟡 | Real C-SPAN network URLs per channel + always-visible "open live feed" fallback link (framing may be blocked by C-SPAN; fallback guarantees a path). Session detection not yet automated. |
+| 24/29 | Vote-start alerts | 🟡 | Client-only scaffolding: "Alert me on votes" button requests browser-notification permission; a 60s poller fires a local notification when a real GovTrack vote is live. Works only while a tab is open. |
 
 ## Infrastructure
 
