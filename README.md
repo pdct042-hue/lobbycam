@@ -1,31 +1,59 @@
 # LOBBY CAM
 
-Real-time congressional conflict-of-interest dashboard. Next.js 14 (App Router) + TypeScript + Tailwind.
+Real-time congressional conflict-of-interest dashboard. Next.js 14 (App Router) + TypeScript + Tailwind, deployed as a single service on Railway.
 
-Tracks a live floor vote, incoming lobbying disclosure filings, and per-member financial conflict scores — all sourced from public government filings. See `lobbycambattleplan.md` (uploaded separately) for the full 78-task roadmap from mockup to production.
+Tracks a live floor vote, incoming lobbying disclosure filings, and per-member financial conflict scores — sourced from public government filings. See `lobbycambattleplan.md` for the full roadmap and `PROGRESS.md` for what's actually built.
 
-## Status
+## Runs with zero setup
 
-This is the Phase 1 scaffold: the original React mockup ported into a real Next.js app, plus three no-auth-required live data integrations:
+The site works out of the box in **demo mode**. Real government data turns on
+per-feed as you add free API keys — see **`docs/ENV_SETUP.md`**. Which feeds are
+live is always visible at **`/status`**.
 
-- `GET /api/votes/live` — latest Senate roll call + voter positions from [GovTrack](https://www.govtrack.us/developers/api). Falls back to a simulated demo vote if unavailable.
-- `GET /api/contracts?recipient=<name>` — federal contract totals from [USASpending.gov](https://api.usaspending.gov/docs/endpoints), shown as a badge on Lobby Wire filing cards.
-- `GET /api/geocode?zip=<zip>` — ZIP → congressional district via the [Census Geocoder](https://geocoding.geo.census.gov/geocoder/) (footer "Find My District" widget).
+## Data feeds
 
-Everything else on the page (donor breakdowns, stock holdings, lobbying filings, conflict scores) is still mock data — those need the paid/keyed data pipelines described in the battle plan (OpenSecrets, FEC, Senate LDA bulk ingest, financial disclosure PDF scraping) plus a Postgres-backed conflict score calculation, none of which are wired up yet.
+**No key required (live now):**
 
-## Getting Started
+- `GET /api/members` — all 537 current members + Bioguide/FEC/OpenSecrets/GovTrack ID crosswalk, from [@unitedstates/congress-legislators](https://github.com/unitedstates/congress-legislators). The backbone for every join.
+- `GET /api/votes/live` — latest Senate roll call + voter positions from [GovTrack](https://www.govtrack.us/developers/api).
+- `GET /api/contracts?recipient=<name>` — federal contract totals from [USASpending.gov](https://api.usaspending.gov/docs/endpoints).
+- `GET /api/geocode?zip=<zip>` — ZIP → congressional district via the [Census Geocoder](https://geocoding.geo.census.gov/geocoder/).
+
+**Free key required (fall back to demo until the key is set):**
+
+- `GET /api/bills/current` — bills & floor activity from Congress.gov (`CONGRESS_GOV_API_KEY`).
+- `GET /api/donors?bioguide=<id>` — donor breakdown by industry from OpenSecrets (`OPENSECRETS_API_KEY`), cached 24h.
+- `GET /api/filings/fec?committee_id=<id>` — recent contributions from the FEC (`FEC_API_KEY`).
+
+**Status:**
+
+- `GET /api/status` / `GET /status` — which feeds are configured.
+
+## Architecture note
+
+This is intentionally a **single Next.js app**, not the battle plan's separate
+Python/Postgres/Redis backend. For the free data tier, Next.js server routes +
+built-in caching cover it with one Railway service and no database. The
+Python + Postgres backend is deferred to the heavy "red" data (lobbying XML and
+financial-disclosure PDF scraping). Rationale is tracked in `PROGRESS.md`.
+
+## Getting Started (local dev)
 
 ```bash
 npm install
-npm run dev
+npm run dev            # http://localhost:3000
+cp .env.example .env.local   # optional: add API keys to test live feeds
 ```
-
-Open [http://localhost:3000](http://localhost:3000).
 
 ## Project layout
 
-- `app/page.tsx` — renders the `LobbyCam` component
-- `components/LobbyCam.tsx` — the full dashboard UI
-- `lib/data.ts` — mock data + shared types (mirrors the shape real API responses will use)
-- `app/api/*/route.ts` — the live data integrations described above
+- `app/page.tsx` / `components/LobbyCam.tsx` — the dashboard UI
+- `app/member/[slug]/page.tsx` — SEO member profile pages
+- `app/status/page.tsx` — data-feed status
+- `app/api/*` — the data routes above
+- `lib/data.ts` — demo data + shared types (mirrors real response shapes)
+- `lib/config.ts` — data-source registry + env-key gating
+- `lib/congressLegislators.ts` — roster loader + ID crosswalk
+- `lib/http.ts` — shared timeout/caching fetch helper
+- `docs/ENV_SETUP.md` — non-coder guide to getting API keys into Railway
+- `PROGRESS.md` — battle-plan progress tracker
