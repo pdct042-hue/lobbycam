@@ -301,3 +301,19 @@ export function formatMoney(n: number): string {
 export function partyLabel(p: string): string {
   return p === "R" ? "Republican" : p === "D" ? "Democrat" : "Independent";
 }
+
+// URL-friendly slug for member profile pages, e.g.
+// "Sen. Robert Caldwell" -> "robert-caldwell". Once the real member roster
+// is loaded, these pages should switch to canonical Bioguide IDs with the
+// name slug as a redirect (battle plan Task 33).
+export function memberSlug(member: Member): string {
+  return member.name
+    .replace(/^(Sen\.|Rep\.)\s+/, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+export function getMemberBySlug(slug: string): Member | undefined {
+  return MEMBERS.find((m) => memberSlug(m) === slug);
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import Link from "next/link";
 import GlobalStyles from "./GlobalStyles";
 import {
   CURRENT_SESSION,
@@ -14,6 +15,7 @@ import {
   INDUSTRY_COLORS,
   formatMoney,
   partyLabel,
+  memberSlug,
   type Voter,
   type Member,
   type Filing,
@@ -294,7 +296,14 @@ function MemberCard({ member, onClick }: { member: Member; onClick: () => void }
       <p className="text-xs font-medium" style={{ color: "var(--red)", fontSize: 11 }}>{member.correlation}</p>
       <div className="flex items-center justify-between mt-2 pt-2" style={{ borderTop: "1px solid var(--rule-light)" }}>
         <span className="caption">Source: FEC / Financial Disclosures</span>
-        <span className="text-xs font-semibold blue" style={{ fontSize: 11 }}>Full Profile {"→"}</span>
+        <Link
+          href={`/member/${memberSlug(member)}`}
+          onClick={(e) => e.stopPropagation()}
+          className="text-xs font-semibold blue"
+          style={{ fontSize: 11 }}
+        >
+          Full Profile {"→"}
+        </Link>
       </div>
     </article>
   );
