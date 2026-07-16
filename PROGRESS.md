@@ -16,7 +16,7 @@ actually built. Updated as work lands.
   deferred to the "red" tier (lobbying XML + disclosure-PDF scraping), which
   actually needs persistent storage and heavy processing.
 - **No Redis yet.** Next.js `revalidate` caching covers current needs
-  (e.g. OpenSecrets cached 24h to respect its 200/day cap).
+  (e.g. FEC donor data cached 24h; Congress.gov schedule 30m).
 - **Graceful degradation everywhere.** Every keyed feed falls back to demo data
   when its key is missing or its upstream is down, so the site never breaks.
 
@@ -57,7 +57,7 @@ actually built. Updated as work lands.
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
-| 21 | Deploy to production | 🟡 | Railway + Porkbun (`lobby.cam`) — domain configured by owner. |
+| 21 | Deploy to production | ✅ | **Live at `lobby.cam`** (Railway + Porkbun). All 7 feeds configured — both keys (`CONGRESS_GOV_API_KEY`, `FEC_API_KEY`, same api.data.gov value) set in Railway; `/status` shows 7/7. Deploys on push to default branch `claude/lobbycam-setup-ac0adv`. |
 | 15 | Realtime push (SSE) | ⬜ | Currently client polls `/api/votes/live` on load; SSE not yet added. |
 | 16 | Job scheduler | ⬜ | Not needed until keyed feeds write to a store (red tier). |
 | 2 | Postgres schema | ⏸️ | Deferred with the Python backend to the red tier. |
@@ -66,13 +66,17 @@ actually built. Updated as work lands.
 
 ## Suggested next steps
 
-1. **Owner:** add the two free API keys in Railway (see `docs/ENV_SETUP.md`)
-   to light up the FEC/Congress.gov feeds. Confirm at `/status`. The no-key
-   feeds (GovTrack votes, USASpending contracts, roster) need only that the
-   production host can reach the upstreams — verify they're live post-deploy
-   (they fail closed to honest empty states, not fabricated data).
-2. Enrich member profile pages with the live FEC donor breakdown (the homepage
+1. **Verify `/api/schedule` live.** Built against Congress.gov's published
+   committee-meeting schema but not exercised end-to-end (sandbox blocks the
+   API). Open "This Week" on prod: real hearings = good; empty *while Congress
+   is in session* = JSON shape needs a fix. Empty during recess is correct.
+2. **Expand `lib/industryMap.ts`** (~70 PACs today). It's the coverage ceiling
+   for Today's Conflicts and member donor data — more PACs = more members
+   surface real money.
+3. **Enrich member profile pages** with the live FEC donor breakdown (homepage
    already does this via `/api/donors`).
-3. When ready for the red tier: stand up Postgres on Railway and start the
-   Python ETL backend for lobbying (#8/#9) and stock holdings (#10) — the
-   prerequisite for real per-voter conflict flags and conflict scores.
+4. **Alerts:** build vote/hearing notifications (Telegram) on top of
+   `/api/votes/live` + `/api/schedule`. Current alert button is browser-only,
+   tab-must-be-open scaffolding.
+5. **Red tier:** stand up Postgres + Python ETL for lobbying (#8/#9) and stock
+   holdings (#10) — prerequisite for real per-voter conflict flags and scores.

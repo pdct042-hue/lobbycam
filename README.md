@@ -1,14 +1,15 @@
 # LOBBY CAM
 
-Real-time congressional conflict-of-interest dashboard. Next.js 14 (App Router) + TypeScript + Tailwind, deployed as a single service on Railway.
+Real-time congressional transparency dashboard. Next.js 16 (App Router) + TypeScript + Tailwind, deployed as a single service on Railway. **Live at [lobby.cam](https://lobby.cam).**
 
-Tracks a live floor vote, incoming lobbying disclosure filings, and per-member financial conflict scores — sourced from public government filings. See `lobbycambattleplan.md` for the full roadmap and `PROGRESS.md` for what's actually built.
+Shows live Senate floor votes, real federal defense-contract totals, FEC donor money by industry, and the upcoming committee schedule — all from public government records. See `lobbycambattleplan.md` for the roadmap and `PROGRESS.md` for what's actually built.
 
-## Runs with zero setup
+## No fabricated data
 
-The site works out of the box in **demo mode**. Real government data turns on
-per-feed as you add free API keys — see **`docs/ENV_SETUP.md`**. Which feeds are
-live is always visible at **`/status`**.
+Every zone renders real data or an honest, labeled empty state — there are no
+placeholder senators or invented figures. Feeds that need a free API key
+degrade to an "awaiting data" state, not fake data. Which feeds are live is
+always visible at **`/status`**; key setup is in **`docs/ENV_SETUP.md`**.
 
 ## Data feeds
 
@@ -17,6 +18,8 @@ live is always visible at **`/status`**.
 - `GET /api/members` — all 537 current members + Bioguide/FEC/OpenSecrets/GovTrack ID crosswalk, from [@unitedstates/congress-legislators](https://github.com/unitedstates/congress-legislators). The backbone for every join.
 - `GET /api/votes/live` — latest Senate roll call + voter positions from [GovTrack](https://www.govtrack.us/developers/api).
 - `GET /api/contracts?recipient=<name>` — federal contract totals from [USASpending.gov](https://api.usaspending.gov/docs/endpoints).
+- `GET /api/contracts/top` — real FY2026 contract totals for major defense primes (Defense Contract Wire).
+- `GET /api/votes/recent` — recent Senate roll-call votes from GovTrack (Recent Votes archive).
 - `GET /api/geocode?zip=<zip>` — ZIP → congressional district via the [Census Geocoder](https://geocoding.geo.census.gov/geocoder/).
 
 **Free key required (fall back to demo until the key is set):**
@@ -24,6 +27,7 @@ live is always visible at **`/status`**.
 - `GET /api/bills/current` — bills & floor activity from Congress.gov (`CONGRESS_GOV_API_KEY`).
 - `GET /api/donors?bioguide=<id>` — donor breakdown by industry, derived from FEC PAC filings + curated `lib/industryMap.ts` (`FEC_API_KEY`), cached 24h. Replaces the retired OpenSecrets API.
 - `GET /api/filings/fec?committee_id=<id>` — recent raw contributions from the FEC (`FEC_API_KEY`).
+- `GET /api/schedule` — upcoming Senate/House committee hearings & markups from Congress.gov (`CONGRESS_GOV_API_KEY`); backs the "This Week" panel.
 
 > `CONGRESS_GOV_API_KEY` and `FEC_API_KEY` are both a single free
 > [api.data.gov](https://api.data.gov/signup/) key — sign up once, use the same
@@ -55,7 +59,8 @@ cp .env.example .env.local   # optional: add API keys to test live feeds
 - `app/member/[slug]/page.tsx` — SEO member profile pages
 - `app/status/page.tsx` — data-feed status
 - `app/api/*` — the data routes above
-- `lib/data.ts` — demo data + shared types (mirrors real response shapes)
+- `lib/data.ts` — shared types + static config (feed URLs, helpers); no fabricated data
+- `lib/industryMap.ts` — curated PAC→industry classifier (coverage lever for donor data)
 - `lib/config.ts` — data-source registry + env-key gating
 - `lib/congressLegislators.ts` — roster loader + ID crosswalk
 - `lib/http.ts` — shared timeout/caching fetch helper
