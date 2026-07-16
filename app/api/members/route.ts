@@ -14,6 +14,8 @@ export async function GET(request: Request) {
     if (chamber === "senate" || chamber === "house") {
       members = members.filter((m) => m.chamber === chamber);
     }
+    const limit = Number(searchParams.get("limit"));
+    if (Number.isFinite(limit) && limit > 0) members = members.slice(0, limit);
     return NextResponse.json({
       source: "congress-legislators",
       count: members.length,

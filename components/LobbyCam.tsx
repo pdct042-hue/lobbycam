@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import Link from "next/link";
 import GlobalStyles from "./GlobalStyles";
 import VoteAlertButton, { readAlertOptIn } from "./VoteAlertButton";
+import TodaysConflicts from "./TodaysConflicts";
 import { isVoteLive } from "@/lib/voteAlert";
 import {
   CURRENT_SESSION,
@@ -321,11 +322,11 @@ function MemberCard({ member, onClick }: { member: Member; onClick: () => void }
           </span>
         ))}
       </div>
-      {member.stockHoldings.length > 0 && (
-        <p className="text-xs mb-1" style={{ color: "var(--muted-dark)", fontSize: 11 }}>
-          Holdings: {member.stockHoldings.map((s) => `${s.company} (${s.value})`).join(", ")}
-        </p>
-      )}
+      {/* Stock holdings hidden until the real disclosure-scraping pipeline
+          lands (red tier) — don't show fabricated holdings. */}
+      <p className="text-xs mb-1" style={{ color: "var(--muted)", fontSize: 11, fontStyle: "italic" }}>
+        Stock holdings: analysis in progress
+      </p>
       <p className="text-xs font-medium" style={{ color: "var(--red)", fontSize: 11 }}>{member.correlation}</p>
       <div className="flex items-center justify-between mt-2 pt-2" style={{ borderTop: "1px solid var(--rule-light)" }}>
         <span className="caption">Source: FEC / Financial Disclosures</span>
@@ -852,14 +853,18 @@ export default function LobbyCam() {
             <h2 className="section-header">Today&apos;s Conflicts</h2>
             <span className="caption">{billNumber}</span>
           </div>
-          <div className="space-y-3">
-            {filteredMembers.map((m) => (
-              <MemberCard key={m.id} member={m} onClick={() => setSelectedMember(m)} />
-            ))}
-            {filteredMembers.length === 0 && (
-              <p className="text-sm py-8 text-center" style={{ color: "var(--muted)" }}>No members match &quot;{searchQuery}&quot;</p>
-            )}
-          </div>
+          <TodaysConflicts
+            demoFallback={
+              <div className="space-y-3">
+                {filteredMembers.map((m) => (
+                  <MemberCard key={m.id} member={m} onClick={() => setSelectedMember(m)} />
+                ))}
+                {filteredMembers.length === 0 && (
+                  <p className="text-sm py-8 text-center" style={{ color: "var(--muted)" }}>No members match &quot;{searchQuery}&quot;</p>
+                )}
+              </div>
+            }
+          />
         </section>
       </main>
 
