@@ -45,10 +45,10 @@ actually built. Updated as work lands.
 | # | Item | Status | Notes |
 |---|------|--------|-------|
 | 1 | Next.js app + mockup ported | ✅ | App Router, TS, Tailwind. Single component ported 1:1. |
-| 20 | Frontend wired to live vote API | 🟡 | Votes use `/api/votes/live` with demo fallback + a Live/Demo badge. Other zones still demo pending keys. |
+| 20 | Frontend wired to live data | ✅ | **All fabricated demo constants removed from the homepage.** Votes use `/api/votes/live` (honest "no active vote" empty state instead of a simulated fallback). Lobby Wire repurposed into a **Defense Contract Wire** (`/api/contracts/top`, real USASpending totals). Archive repurposed into **Recent Senate Votes** (`/api/votes/recent`, real GovTrack roll-calls). Ticker generated only from real fetched data (hidden when none). Every zone shows a labeled empty state when its feed is unavailable — no fabricated names anywhere. |
 | 27 | Dynamic OG / Twitter card tags | 🟡 | `generateMetadata` on member pages (text tags done; card **image** is red-tier Task 23). |
-| 33 | SEO member profile pages | 🟡 | `/member/[slug]` statically pre-rendered for the featured members. Scales to all 537 once profiles read from the roster. |
-| 6/33 | "Today's Conflicts" real data | 🟡 | `components/TodaysConflicts.tsx` shows real senators (roster) + real donor-by-industry (FEC PAC filings), ranked by defense $. Conflict scores + stock holdings hidden and labeled "analysis in progress" (red tier — no fabricated numbers). Falls back to sample cards (clearly labeled) if FEC data unavailable. **TODO next session:** conflict scoring + holdings once red-tier pipeline exists. |
+| 33 | SEO member profile pages | 🟡 | `/member/[slug]` now resolves against the **live roster** (real identity for any of the 537 members, rendered on demand) with real official-record links (Bioguide/GovTrack/FEC). Donors/holdings/vote-flags labeled "analysis in progress" — no fabricated figures. **TODO:** enrich with live FEC donor breakdown (already proven on the homepage). |
+| 6/33 | "Today's Conflicts" real data | ✅ | `components/TodaysConflicts.tsx` shows real senators (roster) + real donor-by-industry (FEC PAC filings), ranked by defense $. Conflict scores + stock holdings hidden and labeled "analysis in progress" (red tier — no fabricated numbers). **Now falls back to an honest "in progress" state (no fake sample senators)** when FEC data is unavailable. **TODO next session:** conflict scoring + holdings once red-tier pipeline exists. |
 | 13 | Live floor feed | 🟡 | C-SPAN's 24/7 streams need a pay-TV login, so switched to FREE gov feeds: House = U.S. House Clerk YouTube (embeds inline), Senate = senate.gov floor webcast link. Always-visible "open live feed" fallback. Session detection not yet automated. |
 | 24/29 | Vote-start alerts | 🟡 | Client-only scaffolding: "Alert me on votes" button requests browser-notification permission; a 60s poller fires a local notification when a real GovTrack vote is live. Works only while a tab is open. |
 
@@ -65,9 +65,13 @@ actually built. Updated as work lands.
 
 ## Suggested next steps
 
-1. **Owner:** add the three free API keys in Railway (see `docs/ENV_SETUP.md`)
-   to turn the green/yellow feeds live. Confirm at `/status`.
-2. Wire real Congress.gov bill + OpenSecrets donor data into the homepage zones
-   (routes exist; UI still reads demo constants for those).
+1. **Owner:** add the two free API keys in Railway (see `docs/ENV_SETUP.md`)
+   to light up the FEC/Congress.gov feeds. Confirm at `/status`. The no-key
+   feeds (GovTrack votes, USASpending contracts, roster) need only that the
+   production host can reach the upstreams — verify they're live post-deploy
+   (they fail closed to honest empty states, not fabricated data).
+2. Enrich member profile pages with the live FEC donor breakdown (the homepage
+   already does this via `/api/donors`).
 3. When ready for the red tier: stand up Postgres on Railway and start the
-   Python ETL backend for lobbying (#8/#9) and stock holdings (#10).
+   Python ETL backend for lobbying (#8/#9) and stock holdings (#10) — the
+   prerequisite for real per-voter conflict flags and conflict scores.

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { formatMoney, partyLabel } from "@/lib/data";
 
 // "Today's Conflicts" backed by REAL data where it exists: real senators from
@@ -9,8 +9,7 @@ import { formatMoney, partyLabel } from "@/lib/data";
 // have yet, so we label them "in progress" rather than fabricate them.
 //
 // If live data isn't available (e.g. FEC_API_KEY missing, or upstream down),
-// it falls back to the demo cards passed in as `demoFallback`, so the page
-// always renders something.
+// it shows an honest "in progress" state — never fabricated senators.
 
 interface RealDonor {
   industry: string;
@@ -74,7 +73,7 @@ function RealCard({ s }: { s: RealSenator }) {
   );
 }
 
-export default function TodaysConflicts({ demoFallback }: { demoFallback: ReactNode }) {
+export default function TodaysConflicts() {
   const [real, setReal] = useState<RealSenator[] | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -123,11 +122,14 @@ export default function TodaysConflicts({ demoFallback }: { demoFallback: ReactN
 
   if (!real) {
     return (
-      <div>
-        <p className="text-xs mb-3 px-2 py-1" style={{ color: "#8A6D1E", background: "rgba(138,109,30,0.12)", fontSize: 10, fontWeight: 600 }}>
-          ⚠ Sample data — live conflict analysis in progress
+      <div className="p-3" style={{ background: "var(--white-warm)", border: "1px solid var(--rule)" }}>
+        <p className="text-xs mb-2 px-2 py-1" style={{ color: "#8A6D1E", background: "rgba(138,109,30,0.12)", fontSize: 10, fontWeight: 600 }}>
+          ⚠ Live conflict analysis in progress
         </p>
-        {demoFallback}
+        <p className="text-sm leading-relaxed" style={{ color: "var(--muted-body)", fontSize: 13 }}>
+          Real senators ranked by industry PAC money load here from FEC filings. They&apos;ll appear once <code style={{ fontSize: 11 }}>FEC_API_KEY</code> is set and this deployment can reach the FEC API. No placeholder senators are shown.
+        </p>
+        <p className="caption mt-2">Source: FEC PAC filings</p>
       </div>
     );
   }
