@@ -31,7 +31,7 @@ actually built. Updated as work lands.
 | 12 | Federal contracts (USASpending) | 🟢 green | ✅ | `/api/contracts`. No key. Badges on Lobby Wire cards. |
 | 28 | District lookup (Census Geocoder) | 🟢 green | ✅ | `/api/geocode`. No key. "Find My District" widget. |
 | 4 | Bills & floor schedule (Congress.gov) | 🟢 green | ✅ | `/api/bills/current`. Needs `CONGRESS_GOV_API_KEY`. |
-| 6 | Donor money (OpenSecrets) | 🟡 yellow | ✅ | `/api/donors`. Needs `OPENSECRETS_API_KEY`. Cached 24h. |
+| 6 | Donor money by industry | 🟡 yellow | ✅ | `/api/donors`. **OpenSecrets API retired Apr 2025** — rebuilt on FEC PAC filings + curated `lib/industryMap.ts`. Needs `FEC_API_KEY`. Cached 24h. |
 | 7 | Campaign filings (FEC) | 🟡 yellow | ✅ | `/api/filings/fec`. Needs `FEC_API_KEY`. |
 | 8 | Lobbying disclosures (Senate LDA) | 🔴 red | ⏸️ | Messy XML + name resolution. Deferred. |
 | 10 | Stock holdings (disclosure PDFs) | 🔴 red | ⏸️ | Scanned-PDF scraping/OCR. Deferred. |

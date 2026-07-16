@@ -79,8 +79,10 @@ export async function fetchRoster(): Promise<RosterMember[]> {
   return members;
 }
 
-/** Resolve a Bioguide ID to its OpenSecrets CRP ID via the crosswalk. */
-export async function opensecretsIdFor(bioguide: string): Promise<string | null> {
+/** Resolve a Bioguide ID to its FEC candidate ID (most recent) via the
+ *  crosswalk. Members can have multiple FEC IDs across cycles/chambers; the
+ *  roster lists the current one first. */
+export async function fecCandidateIdFor(bioguide: string): Promise<string | null> {
   const roster = await fetchRoster();
-  return roster.find((m) => m.bioguide === bioguide)?.ids.opensecrets ?? null;
+  return roster.find((m) => m.bioguide === bioguide)?.ids.fec[0] ?? null;
 }

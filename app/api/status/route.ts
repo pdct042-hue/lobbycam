@@ -16,7 +16,7 @@ export async function GET() {
     summary: {
       total: sources.length,
       configured: sources.filter((s) => s.configured).length,
-      awaitingKey: sources.filter((s) => !s.configured).map((s) => s.envKey),
+      awaitingKey: [...new Set(sources.filter((s) => !s.configured).map((s) => s.envKey))],
     },
   });
 }

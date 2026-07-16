@@ -22,8 +22,12 @@ live is always visible at **`/status`**.
 **Free key required (fall back to demo until the key is set):**
 
 - `GET /api/bills/current` — bills & floor activity from Congress.gov (`CONGRESS_GOV_API_KEY`).
-- `GET /api/donors?bioguide=<id>` — donor breakdown by industry from OpenSecrets (`OPENSECRETS_API_KEY`), cached 24h.
-- `GET /api/filings/fec?committee_id=<id>` — recent contributions from the FEC (`FEC_API_KEY`).
+- `GET /api/donors?bioguide=<id>` — donor breakdown by industry, derived from FEC PAC filings + curated `lib/industryMap.ts` (`FEC_API_KEY`), cached 24h. Replaces the retired OpenSecrets API.
+- `GET /api/filings/fec?committee_id=<id>` — recent raw contributions from the FEC (`FEC_API_KEY`).
+
+> `CONGRESS_GOV_API_KEY` and `FEC_API_KEY` are both a single free
+> [api.data.gov](https://api.data.gov/signup/) key — sign up once, use the same
+> value for both.
 
 **Status:**
 
