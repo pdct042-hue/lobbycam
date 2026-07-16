@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { formatMoney, partyLabel } from "@/lib/data";
+import Link from "next/link";
+import { formatMoney, partyLabel, slugifyName } from "@/lib/data";
 
 // "Today's Conflicts" backed by REAL data where it exists: real senators from
 // the roster + real donor-by-industry from FEC PAC filings. Conflict scores
@@ -23,15 +24,19 @@ interface RealSenator {
   donors: RealDonor[];
 }
 
-function defenseAmount(s: RealSenator): number {
-  return s.donors.find((d) => d.industry === "Defense")?.amount ?? 0;
+function totalClassified(s: RealSenator): number {
+  return s.donors.reduce((sum, d) => sum + d.amount, 0);
 }
 
 function RealCard({ s }: { s: RealSenator }) {
   const top = [...s.donors].sort((a, b) => b.amount - a.amount).slice(0, 3);
   const max = top[0]?.amount ?? 0;
   return (
-    <article className="p-3" style={{ background: "var(--white-warm)", border: "1px solid var(--rule-border)" }}>
+    <Link
+      href={`/member/${slugifyName(s.name)}`}
+      className="block p-3 member-card"
+      style={{ background: "var(--white-warm)", border: "1px solid var(--rule-border)", textDecoration: "none", color: "inherit" }}
+    >
       <div className="flex items-start justify-between mb-2">
         <div>
           <p className="text-sm font-bold leading-snug">{s.name}</p>
@@ -66,10 +71,11 @@ function RealCard({ s }: { s: RealSenator }) {
       <p className="text-xs" style={{ color: "var(--muted)", fontSize: 11, fontStyle: "italic" }}>
         Conflict score & stock holdings: analysis in progress
       </p>
-      <div className="mt-2 pt-2" style={{ borderTop: "1px solid var(--rule-light)" }}>
+      <div className="flex items-center justify-between mt-2 pt-2" style={{ borderTop: "1px solid var(--rule-light)" }}>
         <span className="caption">Source: FEC PAC filings (live)</span>
+        <span className="text-xs font-semibold blue" style={{ fontSize: 11 }}>Full profile →</span>
       </div>
-    </article>
+    </Link>
   );
 }
 
@@ -81,7 +87,11 @@ export default function TodaysConflicts() {
     let cancelled = false;
     (async () => {
       try {
-        const rosterRes = await fetch("/api/members?chamber=senate&limit=6");
+        // Pull a wider slice of the Senate so we can surface the members who
+        // actually have classified PAC money, rather than whichever happen to
+        // be first in roster order. Each /api/donors result is cached 24h, so
+        // this fans out only on a cold cache.
+        const rosterRes = await fetch("/api/members?chamber=senate&limit=25");
         const roster = await rosterRes.json();
         const senators: Array<{ bioguide: string; nameFull: string; party: string; state: string }> =
           roster.members ?? [];
@@ -100,11 +110,14 @@ export default function TodaysConflicts() {
           })
         );
 
-        // Only treat as "real" if live donor data actually came back for at
-        // least one senator; otherwise fall back to demo.
-        if (!withDonors.some((s) => s.donors.length > 0)) throw new Error("no live donor data");
-        withDonors.sort((a, b) => defenseAmount(b) - defenseAmount(a));
-        if (!cancelled) setReal(withDonors);
+        // Show only senators with real classified money, ranked by total, so
+        // the column reads as live conflicts rather than a wall of empties.
+        const ranked = withDonors
+          .filter((s) => s.donors.length > 0)
+          .sort((a, b) => totalClassified(b) - totalClassified(a))
+          .slice(0, 8);
+        if (ranked.length === 0) throw new Error("no live donor data");
+        if (!cancelled) setReal(ranked);
       } catch {
         if (!cancelled) setReal(null);
       } finally {

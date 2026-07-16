@@ -73,6 +73,29 @@ interface GeocodeResponse {
   error?: string;
 }
 
+interface ScheduleItem {
+  eventId: string;
+  chamber: string;
+  type: string | null;
+  title: string | null;
+  date: string | null;
+  status: string | null;
+  committee: string | null;
+  billRef: string | null;
+}
+
+interface ScheduleResponse {
+  source: "congress.gov" | "demo";
+  meetings: ScheduleItem[];
+}
+
+function formatMeetingDate(iso: string | null): string {
+  if (!iso) return "Date TBD";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "Date TBD";
+  return d.toLocaleString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "numeric", minute: "2-digit", timeZone: "America/New_York" });
+}
+
 function formatVoteDate(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
@@ -225,6 +248,105 @@ function ContractCard({ item, max }: { item: RecipientTotal; max: number }) {
       </div>
       <p className="caption mt-1">Source: USASpending.gov</p>
     </article>
+  );
+}
+
+/** "This Week" — upcoming scheduled committee hearings/markups (Congress.gov).
+ *  Shown in place of the floor video when no roll-call vote is live. This is the
+ *  natural hook for future vote/hearing alerts. */
+function SchedulePanel() {
+  const [meetings, setMeetings] = useState<ScheduleItem[] | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/schedule");
+        const json = (await res.json()) as ScheduleResponse;
+        if (cancelled) return;
+        setMeetings(json.source === "congress.gov" ? json.meetings : []);
+      } catch {
+        if (!cancelled) setMeetings([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  return (
+    <div className="w-full" style={{ background: "var(--white-warm)", border: "1px solid var(--rule)", minHeight: 240 }}>
+      <div className="px-3 py-2 flex items-center justify-between" style={{ borderBottom: "1px solid var(--rule)" }}>
+        <span className="section-header">This Week in Congress</span>
+        <span className="caption">Scheduled hearings &amp; markups</span>
+      </div>
+      <div className="p-2 space-y-1.5" style={{ maxHeight: 320, overflowY: "auto" }}>
+        {loading && <p className="caption" style={{ padding: 8 }}>Loading the congressional schedule…</p>}
+        {!loading && meetings && meetings.length > 0 && meetings.map((m) => (
+          <div key={m.eventId} className="p-2" style={{ borderLeft: "3px solid var(--blue)", background: "var(--cream)" }}>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold" style={{ fontSize: 11, color: "var(--blue)" }}>{formatMeetingDate(m.date)} ET</span>
+              <span className="uppercase font-semibold" style={{ fontSize: 8, color: "var(--muted-dark)", letterSpacing: "0.05em" }}>
+                {m.chamber}{m.type ? ` · ${m.type}` : ""}
+              </span>
+            </div>
+            {m.committee && <p className="text-xs font-semibold mt-0.5" style={{ fontSize: 12 }}>{m.committee}</p>}
+            {m.title && <p className="text-xs mt-0.5" style={{ fontSize: 11, color: "var(--muted-body)" }}>{m.title}</p>}
+            {m.billRef && <span className="inline-block mt-1 text-xs font-bold" style={{ fontSize: 10, color: "var(--blue)" }}>{m.billRef}</span>}
+          </div>
+        ))}
+        {!loading && meetings && meetings.length === 0 && (
+          <div className="p-3">
+            <p className="text-sm font-semibold" style={{ fontSize: 13 }}>No hearings on the calendar right now</p>
+            <p className="text-xs mt-1" style={{ color: "var(--muted)", fontSize: 11 }}>
+              Upcoming Senate &amp; House committee hearings and markups load here from Congress.gov. When Congress is in recess this is often empty — it repopulates as the next work period is scheduled.
+            </p>
+            <p className="caption mt-2">Source: Congress.gov committee meetings</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Floor media area: live video when a vote is underway, the congressional
+ *  schedule when it isn't. Defaults to the schedule and auto-switches to video
+ *  when a live vote appears; the user can toggle either way. */
+function FloorMedia({ hasLiveVote, activeChannel, onChannelChange }: { hasLiveVote: boolean; activeChannel: string; onChannelChange: (id: string) => void }) {
+  const [tab, setTab] = useState<"live" | "schedule">("schedule");
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-focus the live feed only when a vote actually starts
+    if (hasLiveVote) setTab("live");
+  }, [hasLiveVote]);
+
+  return (
+    <div className="mb-5">
+      <div className="flex" role="tablist" aria-label="Floor media" style={{ marginBottom: 8 }}>
+        {(["live", "schedule"] as const).map((t) => (
+          <button
+            key={t}
+            role="tab"
+            aria-selected={tab === t}
+            onClick={() => setTab(t)}
+            className="px-3 py-1 text-xs font-semibold uppercase tracking-wider"
+            style={{
+              fontSize: 10, cursor: "pointer",
+              border: "1px solid var(--rule)",
+              borderRight: t === "live" ? "none" : "1px solid var(--rule)",
+              background: tab === t ? "var(--ink)" : "var(--white-warm)",
+              color: tab === t ? "var(--cream)" : "var(--muted-dark)",
+              letterSpacing: "0.06em",
+            }}
+          >
+            {t === "live" ? "Live Feed" : "This Week"}
+          </button>
+        ))}
+      </div>
+      {tab === "live"
+        ? <CSpanEmbed activeChannel={activeChannel} onChannelChange={onChannelChange} />
+        : <SchedulePanel />}
+    </div>
   );
 }
 
@@ -576,7 +698,7 @@ export default function LobbyCam() {
             </div>
           )}
 
-          <CSpanEmbed activeChannel={cspanChannel} onChannelChange={setCspanChannel} />
+          <FloorMedia hasLiveVote={hasLiveVote} activeChannel={cspanChannel} onChannelChange={setCspanChannel} />
 
           <div className="grid grid-cols-2 gap-4 mb-5">
             <VoteColumn label="YEA" votes={yesVotes} flashVote={flashVote} emptyLabel={hasLiveVote ? "Awaiting votes…" : "No live vote"} />

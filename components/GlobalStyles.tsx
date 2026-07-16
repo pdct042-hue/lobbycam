@@ -38,6 +38,9 @@ export default function GlobalStyles() {
       .ticker-paused .ticker-track { animation-play-state: paused; }
       .bar-fill { transition: width 0.6s ease-out; }
 
+      .member-card { transition: border-color 0.15s ease; cursor: pointer; }
+      .member-card:hover { border-color: var(--red); }
+
       .scrollbar-hide::-webkit-scrollbar { display: none; }
       .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
