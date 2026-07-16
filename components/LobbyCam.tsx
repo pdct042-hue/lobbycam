@@ -159,7 +159,7 @@ function CSpanEmbed({ activeChannel, onChannelChange }: { activeChannel: string;
           <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: "var(--red)", animation: "pulse-dot 1.5s ease-in-out infinite" }} aria-hidden="true" />
           <h4 className="section-header">Live Floor Feed</h4>
         </div>
-        <div className="flex" role="tablist" aria-label="C-SPAN channel selector">
+        <div className="flex" role="tablist" aria-label="Floor feed source selector">
           {CSPAN_CHANNELS.map((ch, i) => (
             <button
               key={ch.id}
@@ -210,12 +210,12 @@ function CSpanEmbed({ activeChannel, onChannelChange }: { activeChannel: string;
             className="text-xs font-bold uppercase tracking-wider px-3 py-1.5"
             style={{ background: "var(--cream)", color: "var(--ink)", textDecoration: "none", letterSpacing: "0.08em" }}
           >
-            ▶ Watch on C-SPAN ↗
+            ▶ Watch {activeCspan?.label} ↗
           </a>
         </div>
       </div>
       <div className="flex items-center justify-between mt-1">
-        <p className="caption">Source: C-SPAN — public domain broadcast</p>
+        <p className="caption">Source: U.S. House Clerk / U.S. Senate — free public floor proceedings</p>
         <a
           href={activeCspan?.watchUrl}
           target="_blank"
@@ -546,7 +546,7 @@ export default function LobbyCam() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [flashVote, setFlashVote] = useState<string | null>(null);
-  const [cspanChannel, setCspanChannel] = useState("c-span-2");
+  const [cspanChannel, setCspanChannel] = useState("house");
   const [voteDataSource, setVoteDataSource] = useState<"loading" | "govtrack" | "mock">("loading");
   const [liveVoteMeta, setLiveVoteMeta] = useState<LiveVoteMeta | null>(null);
 

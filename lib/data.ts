@@ -281,28 +281,30 @@ export const PAST_VOTES: PastVote[] = [
   { bill: "S. 1102", title: "Drug Import Safety Act", date: "Mar 1, 2026", conflictedVotes: 9, totalVotes: 44, finding: "9 of 44 NO voters received pharma industry donations exceeding $100K" },
 ];
 
-// C-SPAN's live network pages. embedUrl is the same live page; C-SPAN may send
-// anti-framing headers on some domains, so the UI always shows a visible
-// "open live feed" fallback link (watchUrl) that works regardless. Swap these
-// URLs here if a different stream renders better on the production domain.
+// FREE, login-free floor feeds. C-SPAN's 24/7 network streams require a
+// pay-TV provider login, so we use the government's own free public feeds
+// instead:
+//  - House: the U.S. House Clerk streams the floor live on YouTube, which
+//    embeds inline reliably (shows "offline" gracefully when not in session).
+//  - Senate: there's no equally-clean free embeddable Senate video, so we
+//    link to the Senate's official floor webcast (free, no login) and rely on
+//    the always-visible "open live feed" fallback.
+// A watchUrl is always shown as a fallback link in case a source blocks
+// framing. Swap URLs here if a better free stream appears.
+const HOUSE_CLERK_YT_CHANNEL = "UCqU8qiVHYmLsF0JIMByCTvw"; // youtube.com/USHouseClerk
+
 export const CSPAN_CHANNELS: CspanChannel[] = [
   {
-    id: "c-span-2",
-    label: "Senate",
-    embedUrl: "https://www.c-span.org/networks/?channel=c-span-2",
-    watchUrl: "https://www.c-span.org/networks/?channel=c-span-2",
+    id: "house",
+    label: "House Floor",
+    embedUrl: `https://www.youtube.com/embed/live_stream?channel=${HOUSE_CLERK_YT_CHANNEL}&autoplay=0`,
+    watchUrl: "https://live.house.gov/",
   },
   {
-    id: "c-span",
-    label: "House",
-    embedUrl: "https://www.c-span.org/networks/?channel=c-span",
-    watchUrl: "https://www.c-span.org/networks/?channel=c-span",
-  },
-  {
-    id: "c-span-3",
-    label: "C-SPAN 3",
-    embedUrl: "https://www.c-span.org/networks/?channel=c-span-3",
-    watchUrl: "https://www.c-span.org/networks/?channel=c-span-3",
+    id: "senate",
+    label: "Senate Floor",
+    embedUrl: "https://www.senate.gov/legislative/floor_activity_pail.htm",
+    watchUrl: "https://www.senate.gov/legislative/floor_activity_pail.htm",
   },
 ];
 
