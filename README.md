@@ -11,6 +11,23 @@ placeholder senators or invented figures. Feeds that need a free API key
 degrade to an "awaiting data" state, not fake data. Which feeds are live is
 always visible at **`/status`**; key setup is in **`docs/ENV_SETUP.md`**.
 
+## Threat levels (DEFCON model)
+
+Congress rarely holds a recorded vote at any given moment, so the site doesn't
+lead with a dead "no vote" box. Instead the whole page has a **threat level** that
+escalates with live floor activity:
+
+- **Level 3 · Routine** — the floor is quiet (default). Research mode: PAC money,
+  contract flows, donor conflicts.
+- **Level 2 · Elevated** — floor is in session. Live coverage + conflict chyrons
+  (who's talking, and who paid them).
+- **Level 1 · Critical** — a recorded vote is underway. Full play-by-play spectacle.
+
+Level 3 is the working dashboard today; Levels 1 & 2 are scaffolded (real frames,
+honestly-labeled placeholders for the not-yet-built spectacle features). Preview
+any level with `?level=1|2|3`. Model in `lib/level.ts`; full roadmap in
+**`docs/LEVELS.md`**.
+
 ## Data feeds
 
 **No key required (live now):**
@@ -56,6 +73,7 @@ cp .env.example .env.local   # optional: add API keys to test live feeds
 ## Project layout
 
 - `app/page.tsx` / `components/LobbyCam.tsx` — the dashboard UI
+- `lib/level.ts` / `components/LevelBanner.tsx` / `components/levels/*` — the DEFCON threat-level system (see `docs/LEVELS.md`)
 - `app/member/[slug]/page.tsx` — SEO member profile pages
 - `app/status/page.tsx` — data-feed status
 - `app/api/*` — the data routes above

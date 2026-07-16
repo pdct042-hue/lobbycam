@@ -4,6 +4,10 @@ import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import GlobalStyles from "./GlobalStyles";
 import VoteAlertButton, { readAlertOptIn } from "./VoteAlertButton";
 import TodaysConflicts from "./TodaysConflicts";
+import LevelBanner from "./LevelBanner";
+import LiveVoteBroadcast from "./levels/LiveVoteBroadcast";
+import FloorSessionMode from "./levels/FloorSessionMode";
+import { deriveLevel, parseLevelOverride, LEVELS, type AlertLevel } from "@/lib/level";
 import { isVoteLive } from "@/lib/voteAlert";
 import {
   CSPAN_CHANNELS,
@@ -587,16 +591,37 @@ export default function LobbyCam() {
   const billNumber = liveVoteMeta?.billNumber ?? null;
   const billTitle = liveVoteMeta?.billTitle ?? liveVoteMeta?.question ?? null;
 
+  // ── Threat level ────────────────────────────────────────────────────
+  // The page's posture escalates with live floor activity (see lib/level.ts):
+  //   1 CRITICAL = recorded vote live · 2 ELEVATED = floor in session ·
+  //   3 ROUTINE  = quiet (research mode, the default).
+  // `?level=` forces a level for previewing the L1/L2 scaffolding — it changes
+  // layout only, never fabricates data.
+  const [levelOverride, setLevelOverride] = useState<AlertLevel | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const override = parseLevelOverride(new URLSearchParams(window.location.search).get("level"));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- read the URL preview flag once on mount
+    if (override) setLevelOverride(override);
+  }, []);
+
+  // Floor-session detection (Level 2) isn't wired to a reliable feed yet, so
+  // it's `null` (unknown) — we never claim the floor is live when unsure.
+  // See docs/LEVELS.md for the signal roadmap.
+  const floorInSession: boolean | null = null;
+  const level: AlertLevel = levelOverride ?? deriveLevel({ liveVote: hasLiveVote, floorInSession });
+  const levelMeta = LEVELS[level];
+
   return (
     <div className="sans ink min-h-screen" style={{ background: "var(--cream)" }}>
       <GlobalStyles />
       <a href="#main-content" className="skip-link">Skip to main content</a>
 
       {/* ═══ MASTHEAD ═══ */}
-      <header className="w-full" style={{ maxWidth: 1400, margin: "0 auto" }}>
-        <div className="flex items-end justify-between px-6 pt-5 pb-3">
+      <header className="w-full lc-shell">
+        <div className="flex flex-wrap items-end justify-between gap-3 px-6 pt-5 pb-3">
           <div>
-            <h1 className="serif leading-none tracking-tight" style={{ fontSize: 42, fontWeight: 900, color: "var(--ink)", letterSpacing: "-0.02em" }}>
+            <h1 className="serif leading-none tracking-tight lc-title" style={{ fontWeight: 900, color: "var(--ink)", letterSpacing: "-0.02em" }}>
               LOBBY CAM
             </h1>
             <p className="small-caps mt-1" style={{ fontSize: 11, color: "var(--muted)", fontWeight: 600, letterSpacing: "0.14em" }}>
@@ -607,11 +632,11 @@ export default function LobbyCam() {
             <div className="flex items-center gap-2 pl-3" aria-live="polite">
               <span
                 className="inline-block w-2 h-2 rounded-full"
-                style={{ background: hasLiveVote ? "var(--red)" : "var(--muted)", animation: hasLiveVote ? "pulse-dot 1.5s ease-in-out infinite" : "none" }}
+                style={{ background: levelMeta.color, animation: level < 3 ? "pulse-dot 1.5s ease-in-out infinite" : "none" }}
                 aria-hidden="true"
               />
-              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: hasLiveVote ? "var(--red)" : "var(--muted)", fontSize: 11 }}>
-                {voteDataSource === "loading" ? "Connecting…" : hasLiveVote ? "Live Senate Vote" : "No Active Floor Vote"}
+              <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: levelMeta.color, fontSize: 11 }}>
+                {voteDataSource === "loading" ? "Connecting…" : `${levelMeta.code} · ${levelMeta.name}`}
               </span>
             </div>
             {hasLiveVote && (
@@ -628,6 +653,10 @@ export default function LobbyCam() {
         </div>
 
         <div className="mx-6" style={{ borderTop: "1px solid var(--rule)" }} />
+
+        {/* Threat-level banner: primary orientation. Tells a visitor how hot
+            the floor is and what mode the page is in right now. */}
+        <LevelBanner level={level} preview={levelOverride != null} />
 
         {tickerItems.length > 0 && (
           <>
@@ -665,14 +694,31 @@ export default function LobbyCam() {
         {tickerItems.length === 0 && <div className="mx-6 mt-2" style={{ borderTop: "2px solid var(--ink)" }} />}
       </header>
 
-      {/* ═══ MAIN GRID ═══ */}
-      <main id="main-content" className="px-6 py-4 gap-6" style={{ maxWidth: 1400, margin: "0 auto", display: "grid", gridTemplateColumns: "minmax(0, 5fr) minmax(0, 3.5fr) minmax(0, 3.5fr)" }}>
+      {/* ═══ LEVEL TAKEOVERS ═══
+          When the floor heats up, the active mode takes over above the routine
+          grid. LEVEL 3 shows nothing here — the grid below is the whole show.
+          These are scaffolds: the frames are real, the spectacle features carry
+          honest "not built yet" labels (see docs/LEVELS.md). */}
+      {level === 1 && (
+        <div className="lc-shell">
+          <LiveVoteBroadcast vote={liveVoteMeta} />
+        </div>
+      )}
+      {level === 2 && (
+        <div className="lc-shell">
+          <FloorSessionMode chyronItems={[]} />
+        </div>
+      )}
 
-        <section className="pr-5" style={{ borderRight: "1px solid var(--rule)" }} aria-label="Floor activity">
-          <div className="flex items-center justify-between mb-4">
+      {/* ═══ MAIN GRID ═══ */}
+      <main id="main-content" className="lc-shell lc-grid px-6 py-4">
+
+        <section className="lc-col-floor" aria-label="Floor activity">
+          <div className="flex items-center justify-between">
             <h2 className="section-header">On the Floor</h2>
             <span className="caption">{timeStr}{timeStr ? " — " : ""}Live feed</span>
           </div>
+          <p className="lc-dek mb-4">What the U.S. Senate is voting on right now — live from GovTrack.</p>
 
           {hasLiveVote ? (
             <div className="mb-5">

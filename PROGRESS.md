@@ -9,6 +9,14 @@ actually built. Updated as work lands.
 
 ## Architecture decisions (deviations from the plan, on purpose)
 
+- **DEFCON-style threat levels drive the whole UI.** Congress rarely holds a
+  recorded vote at any given moment, so leading with a "no vote in progress" box
+  makes the site feel dead most of the time. Instead the page has a posture that
+  escalates with live floor activity: **Level 3 · Routine** (research mode — the
+  default), **Level 2 · Elevated** (floor in session — live coverage + conflict
+  chyrons), **Level 1 · Critical** (recorded vote — full play-by-play spectacle).
+  Model + banner are built and live; L1/L2 modes are scaffolded shells with
+  honest "not built yet" labels. Full roadmap in **`docs/LEVELS.md`**.
 - **Single Next.js app, not two services.** The plan calls for a separate
   Python/FastAPI backend + PostgreSQL + Redis. For the free "green/yellow" data
   tier, Next.js server routes with built-in fetch caching do the job with one
@@ -44,6 +52,8 @@ actually built. Updated as work lands.
 
 | # | Item | Status | Notes |
 |---|------|--------|-------|
+| L | **DEFCON threat-level system** | 🟡 | `lib/level.ts` (model + `deriveLevel`), `components/LevelBanner.tsx` (3·2·1 meter, primary orientation), and mode scaffolds `components/levels/{LiveVoteBroadcast,FloorSessionMode}.tsx`. **Level 3 (research mode) is the working default**; **L1/L2 are scaffolded takeovers** with honest "not built yet" labels. Level derives from `liveVote` (wired) + `floorInSession` (**not wired** — the key TODO). Preview any level with `?level=1\|2\|3`. Full roadmap: **`docs/LEVELS.md`**. |
+| R | Responsive layout | ✅ | Was a hardcoded 3-col grid with **zero media queries** (broken on phones/tablets). Now: 3-col desktop → 2-col tablet (floor spans full width) → single column on mobile, via `lc-grid`/`lc-shell` classes in `GlobalStyles`. Masthead wraps; `prefers-reduced-motion` honored. |
 | 1 | Next.js app + mockup ported | ✅ | App Router, TS, Tailwind. Single component ported 1:1. |
 | 20 | Frontend wired to live data | ✅ | **All fabricated demo constants removed from the homepage.** Votes use `/api/votes/live` (honest "no active vote" empty state instead of a simulated fallback). Lobby Wire repurposed into a **Defense Contract Wire** (`/api/contracts/top`, real USASpending totals). Archive repurposed into **Recent Senate Votes** (`/api/votes/recent`, real GovTrack roll-calls). Ticker generated only from real fetched data (hidden when none). Every zone shows a labeled empty state when its feed is unavailable — no fabricated names anywhere. |
 | 27 | Dynamic OG / Twitter card tags | 🟡 | `generateMetadata` on member pages (text tags done; card **image** is red-tier Task 23). |
@@ -66,6 +76,12 @@ actually built. Updated as work lands.
 
 ## Suggested next steps
 
+0. **Turn on Level 2 (see `docs/LEVELS.md`).** Wire the `floorInSession` signal
+   — pick a floor-status source (House Clerk / Senate webcast / Congress.gov
+   floor activity), add `/api/floor-status`, feed it into `deriveLevel`. Then
+   feed the conflict chyron real FEC donor data (already available via
+   `/api/donors`). This is the biggest UX unlock: the site starts *escalating*
+   on its own instead of only lighting up during a recorded vote.
 1. **Verify `/api/schedule` live.** Built against Congress.gov's published
    committee-meeting schema but not exercised end-to-end (sandbox blocks the
    API). Open "This Week" on prod: real hearings = good; empty *while Congress
