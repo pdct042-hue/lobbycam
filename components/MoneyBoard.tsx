@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatMoney, partyLabel, slugifyName } from "@/lib/data";
 
-// "Today's Conflicts" backed by REAL data where it exists: real senators from
-// the roster + real donor-by-industry from FEC PAC filings. Conflict scores
-// and stock holdings are NOT shown here — those are red-tier data we don't
-// have yet, so we label them "in progress" rather than fabricate them.
+// "The Money Board" backed by REAL data where it exists: real senators from
+// the roster + real donor-by-industry from FEC PAC filings. Figures are
+// CYCLE-TO-DATE totals (FEC data lands on filing deadlines and our fetch is
+// cached 24h) — the UI says so and never implies same-day money. Conflict
+// scores and stock holdings are NOT shown here — those are red-tier data we
+// don't have yet, so we label them "in progress" rather than fabricate them.
 //
 // If live data isn't available (e.g. FEC_API_KEY missing, or upstream down),
 // it shows an honest "in progress" state — never fabricated senators.
@@ -72,14 +74,14 @@ function RealCard({ s }: { s: RealSenator }) {
         Conflict score & stock holdings: analysis in progress
       </p>
       <div className="flex items-center justify-between mt-2 pt-2" style={{ borderTop: "1px solid var(--rule-light)" }}>
-        <span className="caption">Source: FEC PAC filings (live)</span>
+        <span className="caption">Source: FEC PAC filings — cycle to date</span>
         <span className="text-xs font-semibold blue" style={{ fontSize: 11 }}>Full profile →</span>
       </div>
     </Link>
   );
 }
 
-export default function TodaysConflicts() {
+export default function MoneyBoard() {
   const [real, setReal] = useState<RealSenator[] | null>(null);
   const [loading, setLoading] = useState(true);
 

@@ -11,7 +11,7 @@
 //      We don't have a reliable free source yet, so this shows a labeled
 //      placeholder rather than guessing.
 //   2. Chyron data — the ticker can already be driven by the real FEC donor
-//      data that powers Today's Conflicts; pass it in via `chyronItems`.
+//      data that powers The Money Board; pass it in via `chyronItems`.
 
 export interface ChyronItem {
   /** e.g. "Sen. Jane Doe (R-TX)" */
@@ -27,7 +27,7 @@ function ConflictChyron({ items }: { items: ChyronItem[] }) {
         <span className="lc-chyron-tag">Who bought them</span>
         <div className="lc-chyron-track lc-chyron-empty">
           Conflict chyron — live FEC donor money for whoever holds the floor. Wire real
-          data in via <code>chyronItems</code> (already available from Today&apos;s Conflicts).
+          data in via <code>chyronItems</code> (already available from The Money Board).
         </div>
       </div>
     );

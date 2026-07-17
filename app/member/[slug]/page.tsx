@@ -135,7 +135,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<Pa
         <div className="space-y-8">
           <InProgress
             heading="Career Donor Breakdown by Industry"
-            body="Industry-classified PAC money from FEC filings is being wired into member pages (it already backs the homepage's Today's Conflicts). Until it lands here, no donor figures are shown for this member."
+            body="Industry-classified PAC money from FEC filings is being wired into member pages (it already backs the homepage's Money Board). Until it lands here, no donor figures are shown for this member."
             source="FEC PAC filings"
           />
           <InProgress

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import GlobalStyles from "./GlobalStyles";
-import TodaysConflicts from "./TodaysConflicts";
+import MoneyBoard from "./MoneyBoard";
 import MemberSearch from "./MemberSearch";
 import LevelBanner from "./LevelBanner";
 import LiveVoteBroadcast from "./levels/LiveVoteBroadcast";
@@ -739,18 +739,18 @@ export default function LobbyCam() {
               <div className="p-3" style={{ background: "var(--white-warm)", border: "1px solid var(--rule)" }}>
                 <h4 className="section-header mb-2">Per-Voter Conflict Analysis</h4>
                 <p className="text-sm leading-relaxed" style={{ color: "var(--muted-body)", fontSize: 13 }}>
-                  Flagging individual senators&apos; votes against their donors and holdings requires the financial-disclosure pipeline (red tier), which isn&apos;t live yet. Until it is, no conflict is asserted against any named member here — see the FEC-backed donor breakdown under Today&apos;s Conflicts.
+                  Flagging individual senators&apos; votes against their donors and holdings requires the financial-disclosure pipeline (red tier), which isn&apos;t live yet. Until it is, no conflict is asserted against any named member here — see the FEC-backed donor breakdown on The Money Board.
                 </p>
               </div>
             </section>
 
-            <section className="lc-col-wire" aria-label="Today's conflicts">
+            <section className="lc-col-wire" aria-label="The Money Board">
               <div className="flex items-center justify-between">
-                <h2 className="section-header">Today&apos;s Conflicts</h2>
-                <span className="caption">Live FEC PAC money</span>
+                <h2 className="section-header">The Money Board</h2>
+                <span className="caption">FEC PAC money · this cycle</span>
               </div>
-              <p className="lc-dek mb-4">Senators ranked by classified industry PAC money.</p>
-              <TodaysConflicts />
+              <p className="lc-dek mb-4">Senators ranked by industry PAC money reported this election cycle.</p>
+              <MoneyBoard />
             </section>
 
             <section className="lc-col-conflicts" aria-label="Investigate a member">
@@ -759,15 +759,15 @@ export default function LobbyCam() {
           </>
         ) : (
           <>
-            <section className="lc-col-floor" aria-label="Today's conflicts">
+            <section className="lc-col-floor" aria-label="The Money Board">
               <div className="flex items-center justify-between">
-                <h2 className="section-header">Today&apos;s Conflicts</h2>
-                <span className="caption">Live FEC PAC money</span>
+                <h2 className="section-header">The Money Board</h2>
+                <span className="caption">FEC PAC money · this cycle</span>
               </div>
               <p className="lc-dek mb-4">
-                Who&apos;s taking what: senators ranked by industry PAC money, straight from FEC filings. Open any card to pull the member&apos;s full file.
+                Who&apos;s taking what: senators ranked by industry PAC money reported this election cycle, straight from FEC filings. Open any card to pull the member&apos;s full file.
               </p>
-              <TodaysConflicts />
+              <MoneyBoard />
             </section>
 
             <section className="lc-col-wire" aria-label="Investigate a member">

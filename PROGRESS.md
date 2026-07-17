@@ -62,7 +62,7 @@ row of status cards. Tasks in recommended order:
 
 0. **L3 declutter — lead with the dirt** (✅ done). Research mode is now built
    around what an investigating visitor actually wants:
-   - **Today's Conflicts is the lead column** (real FEC PAC money, ranked).
+   - **The Money Board is the lead column** (real FEC PAC money, ranked).
    - **"Investigate a Member"** (`components/MemberSearch.tsx`): search the live
      roster — every current member, both chambers — by name or state and jump
      straight to their file at `/member/[slug]`. The ZIP → district lookup moved
@@ -78,13 +78,13 @@ row of status cards. Tasks in recommended order:
      alerts return server-side in Phase 4.
 1. **Expand donor coverage — `lib/industryMap.ts`** (⬜, highest leverage, lowest
    risk). Only ~70 PAC→industry mappings today, and that's the ceiling for both
-   Today's Conflicts and member donor breakdowns. More mappings = more senators
-   surface real money. *Done when:* Today's Conflicts shows a fuller, more varied
+   The Money Board and member donor breakdowns. More mappings = more senators
+   surface real money. *Done when:* The Money Board shows a fuller, more varied
    set of senators and more member pages show donor data.
 2. **Enrich member profile pages with live FEC donors** (⬜). `/member/[slug]`
    still shows "analysis in progress" for donors, but the homepage already pulls
    this via `/api/donors`. Reuse that call + the `RealCard` bar UI from
-   `components/TodaysConflicts.tsx`. *Done when:* a member page shows the same
+   `components/MoneyBoard.tsx`. *Done when:* a member page shows the same
    real industry-PAC breakdown as the homepage.
 3. **Verify `/api/schedule` end-to-end** (🟡). Built against Congress.gov's
    committee-meeting schema but never exercised (sandbox blocked the API).
@@ -116,7 +116,7 @@ row of status cards. Tasks in recommended order:
   of only lighting up during a recorded vote.
 - **Feed the conflict chyron real FEC data** (🟡): `FloorSessionMode` already
   renders a chyron; pass real donor items from `/api/donors` (the same data
-  behind Today's Conflicts) via `chyronItems`.
+  behind The Money Board) via `chyronItems`.
 - **Current-speaker card** (⬜): blocked on a speaker feed. No speaker named until
   it can be sourced.
 
@@ -168,7 +168,7 @@ row of status cards. Tasks in recommended order:
 | 1 | Next.js app + mockup ported | ✅ | App Router, TS, Tailwind. |
 | 20 | Frontend wired to live data | ✅ | No fabricated constants. Vote machinery renders only during a live roll-call (quiet floor = one "No active votes" strip); Defense Contract Wire → `/api/contracts/top` (below the fold); Recent Senate Votes → `/api/votes/recent`; ticker only from real data. Every zone has a labeled empty state. |
 | — | "Investigate a Member" search | ✅ | `components/MemberSearch.tsx`: live-roster search (name / state code) → `/member/[slug]`. ZIP district lookup sits beside it. |
-| 6/33 | "Today's Conflicts" real data | ✅ | `components/TodaysConflicts.tsx`: real senators + real donor-by-industry (FEC PAC). Queries 25, keeps members with classified PAC money, ranks, shows top 8. Cards link to member pages. Coverage bounded by `lib/industryMap.ts` (Phase 1.1). |
+| 6/33 | "The Money Board" real data | ✅ | `components/MoneyBoard.tsx`: real senators + real donor-by-industry (FEC PAC). Queries 25, keeps members with classified PAC money, ranks, shows top 8. Cards link to member pages. Coverage bounded by `lib/industryMap.ts` (Phase 1.1). |
 | 13b | "This Week" schedule | ✅ | `/api/schedule` (Congress.gov) + toggle with the floor feed. Fails closed. Verify live = Phase 1.3. |
 | 13 | Live floor feed | 🟡 | Free gov feeds (House Clerk YouTube embed; Senate webcast link) — C-SPAN needs a pay-TV login. Session detection not automated (→ Phase 2). |
 | 33 | SEO member profile pages | 🟡 | `/member/[slug]` resolves against the live roster with real record links (Bioguide/GovTrack/FEC). Donors/holdings/vote-flags labeled "in progress" → enrich in Phase 1.2. |
