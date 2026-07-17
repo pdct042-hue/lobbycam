@@ -81,11 +81,22 @@ row of status cards. Tasks in recommended order:
    The Money Board and member donor breakdowns. More mappings = more senators
    surface real money. *Done when:* The Money Board shows a fuller, more varied
    set of senators and more member pages show donor data.
-2. **Enrich member profile pages with live FEC donors** (⬜). `/member/[slug]`
-   still shows "analysis in progress" for donors, but the homepage already pulls
-   this via `/api/donors`. Reuse that call + the `RealCard` bar UI from
-   `components/MoneyBoard.tsx`. *Done when:* a member page shows the same
-   real industry-PAC breakdown as the homepage.
+2. **Enrich member profile pages with live FEC donors** (✅ done). The FEC
+   resolution chain moved to `lib/donors.ts` (shared by `/api/donors` and the
+   member pages). `/member/[slug]` now shows, from real cycle-to-date FEC data:
+   - **"The Numbers"** stat row: classified industry PAC money, top industry +
+     share, industry count, concentration (HHI).
+   - **Industry PAC money breakdown** with per-industry bars and the named PACs
+     behind each figure, plus the unclassified remainder (honestly labeled).
+   - **Conflict Index v0** (`lib/conflictScore.ts`): five defined inputs —
+     money volume + money concentration are LIVE (computed from FEC),
+     contract-overlap / holdings / lobbying are PENDING with their blocking
+     pipeline named. Headline score is the mean of live inputs, labeled
+     "provisional · 2 of 5 inputs · money only" everywhere. When a pending
+     pipeline lands, add its input in `lib/conflictScore.ts` and every member
+     page updates.
+   When FEC data can't be resolved the page shows a labeled empty state — no
+   invented figures.
 3. **Verify `/api/schedule` end-to-end** (🟡). Built against Congress.gov's
    committee-meeting schema but never exercised (sandbox blocked the API).
    Confirm "This Week" populates on prod while Congress is in session; fix the
@@ -110,15 +121,26 @@ row of status cards. Tasks in recommended order:
 (`lc-grid`/`lc-shell`) and remember L3 is the default render.
 
 ### PHASE 2 — Turn on Level 2 (biggest UX unlock)
-- **Wire `floorInSession`** (⬜): pick a floor-status source (House Clerk feed /
-  Senate webcast / Congress.gov floor activity), add `/api/floor-status`, feed it
-  into `deriveLevel`. This is what makes the site *escalate on its own* instead
-  of only lighting up during a recorded vote.
+- **Wire `floorInSession`** (⬜): the L2 trigger is `deriveLevel({ floorInSession })`
+  — currently hard-`null` because no feed is wired. Best source: the **House
+  Clerk's live Floor Summary XML** (`clerk.house.gov/floorsummary/floor-download.aspx`)
+  — free, no key, updates through the legislative day, and includes an explicit
+  in-session signal. Senate: the daily floor schedule + `floor_activity` pages
+  (coarser). Add `/api/floor-status` that parses these and feed it into
+  `deriveLevel`. This is what makes the site *escalate on its own* instead of
+  only lighting up during a recorded vote.
+- **Current-speaker card + "chyron their ass"** (⬜): **House = feasible now.**
+  The same Clerk Floor Summary XML names members as they're recognized on the
+  floor ("Mr. SMITH of Texas asked...") in near-real-time floor actions. Plan:
+  parse the latest floor action → extract the member name → resolve against the
+  roster (`lib/congressLegislators.ts`) → pull their money via `lib/donors.ts` →
+  render name + top donor industries in the `FloorSessionMode` chyron. **Senate
+  = no free structured speaker feed**; naming the current Senate speaker needs
+  caption/speech-to-text diarization on the webcast (heavy — treat as red-tier).
+  No speaker is ever named from guesswork.
 - **Feed the conflict chyron real FEC data** (🟡): `FloorSessionMode` already
   renders a chyron; pass real donor items from `/api/donors` (the same data
   behind The Money Board) via `chyronItems`.
-- **Current-speaker card** (⬜): blocked on a speaker feed. No speaker named until
-  it can be sourced.
 
 ### PHASE 3 — Level 1 spectacle (needs the red tier)
 - **Play-by-play conflict flags** (⬜): per-position overlay ("voted YEA · took $X
@@ -171,7 +193,7 @@ row of status cards. Tasks in recommended order:
 | 6/33 | "The Money Board" real data | ✅ | `components/MoneyBoard.tsx`: real senators + real donor-by-industry (FEC PAC). Queries 25, keeps members with classified PAC money, ranks, shows top 8. Cards link to member pages. Coverage bounded by `lib/industryMap.ts` (Phase 1.1). |
 | 13b | "This Week" schedule | ✅ | `/api/schedule` (Congress.gov) + toggle with the floor feed. Fails closed. Verify live = Phase 1.3. |
 | 13 | Live floor feed | 🟡 | Free gov feeds (House Clerk YouTube embed; Senate webcast link) — C-SPAN needs a pay-TV login. Session detection not automated (→ Phase 2). |
-| 33 | SEO member profile pages | 🟡 | `/member/[slug]` resolves against the live roster with real record links (Bioguide/GovTrack/FEC). Donors/holdings/vote-flags labeled "in progress" → enrich in Phase 1.2. |
+| 33 | SEO member profile pages | 🟡 | `/member/[slug]`: live roster identity + record links, real FEC donor breakdown w/ named PACs, "The Numbers" stat row, and Conflict Index v0 (`lib/conflictScore.ts`, money inputs live, 3 inputs pending). Holdings/vote-flags still labeled "in progress" (red tier). |
 | 27 | Dynamic OG / Twitter tags | 🟡 | `generateMetadata` on member pages (text done; card image is red-tier). |
 | 24/29 | Vote-start alerts | ⬜ | Browser-only scaffold removed in the L3 declutter (a tab-must-be-open notification wasn't a real alert). Real server-side alerts → Phase 4. |
 
