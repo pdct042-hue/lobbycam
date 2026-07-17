@@ -2,13 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import GlobalStyles from "./GlobalStyles";
-import VoteAlertButton, { readAlertOptIn } from "./VoteAlertButton";
 import TodaysConflicts from "./TodaysConflicts";
+import MemberSearch from "./MemberSearch";
 import LevelBanner from "./LevelBanner";
 import LiveVoteBroadcast from "./levels/LiveVoteBroadcast";
 import FloorSessionMode from "./levels/FloorSessionMode";
 import { deriveLevel, parseLevelOverride, LEVELS, type AlertLevel } from "@/lib/level";
-import { isVoteLive } from "@/lib/voteAlert";
 import {
   CSPAN_CHANNELS,
   INDUSTRY_COLORS,
@@ -377,7 +376,7 @@ function DistrictLookup() {
   }, [zip]);
 
   return (
-    <div className="mt-3 flex flex-col items-center gap-2">
+    <div className="mt-2 flex flex-col gap-2">
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
         <label htmlFor="zip-lookup" className="sr-only">Enter your ZIP code</label>
         <input
@@ -400,12 +399,34 @@ function DistrictLookup() {
         </button>
       </form>
       {result && (
-        <p className="caption" style={{ maxWidth: 320, textAlign: "center" }}>
+        <p className="caption" style={{ maxWidth: 320 }}>
           {result.resolved
             ? `District: ${result.label ?? `${result.state}-${result.district}`}`
             : "Couldn't resolve that ZIP right now — this feature needs live internet access to the Census Geocoder."}
         </p>
       )}
+    </div>
+  );
+}
+
+/** "Investigate a Member" column — the research-mode front door: pull any
+ *  current member's file by name/state, or start from a ZIP code. */
+function InvestigatePanel() {
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <h2 className="section-header">Investigate a Member</h2>
+        <span className="caption">Live roster</span>
+      </div>
+      <p className="lc-dek mb-4">
+        Pull anyone&apos;s file — donor records, contracts, votes, official filings. All 535+ current members, both chambers.
+      </p>
+      <MemberSearch />
+      <div className="mt-5 pt-4" style={{ borderTop: "1px solid var(--rule)" }}>
+        <h3 className="section-header mb-1">Who represents you?</h3>
+        <p className="caption">Start from your ZIP code, then look up your district&apos;s members above.</p>
+        <DistrictLookup />
+      </div>
     </div>
   );
 }
@@ -431,7 +452,6 @@ export default function LobbyCam() {
   const votersRef = useRef<{ yes: Voter[]; no: Voter[] }>({ yes: [], no: [] });
   const voteIdx = useRef({ y: 0, n: 0 });
   const voteTimer = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
-  const notifiedVoteId = useRef<number | null>(null);
 
   // Bootstrap live vote data. When GovTrack has a real Senate vote, reveal its
   // positions one at a time for the "watching it happen" feel. When there's no
@@ -531,33 +551,6 @@ export default function LobbyCam() {
     return () => clearTimeout(t);
   }, [flashVote]);
 
-  // Vote-alert poller: every 60s, if a REAL GovTrack vote is live and the user
-  // opted in, fire one local browser notification per vote. Only fires for real
-  // votes, so a quiet floor never spams.
-  useEffect(() => {
-    async function checkForLiveVote() {
-      if (typeof window === "undefined") return;
-      if (!("Notification" in window) || Notification.permission !== "granted") return;
-      if (!readAlertOptIn()) return;
-      try {
-        const res = await fetch("/api/votes/live");
-        const json = (await res.json()) as LiveVotesResponse;
-        const v = json.vote;
-        if (json.source !== "govtrack" || !v || !isVoteLive(v.created)) return;
-        if (notifiedVoteId.current === v.id) return;
-        notifiedVoteId.current = v.id;
-        new Notification("🔴 Floor vote underway", {
-          body: `${v.billNumber ?? "A vote"} — ${v.question ?? "Senate floor vote"}. Open LOBBY CAM to watch it live.`,
-        });
-      } catch {
-        /* ignore transient poll failures */
-      }
-    }
-    checkForLiveVote();
-    const timer = setInterval(checkForLiveVote, 60_000);
-    return () => clearInterval(timer);
-  }, []);
-
   // Ticker is generated ONLY from real fetched data. If nothing real is
   // available, it isn't rendered at all — no fabricated headlines.
   const tickerItems = useMemo(() => {
@@ -648,7 +641,6 @@ export default function LobbyCam() {
                 Live GovTrack Data
               </span>
             )}
-            <VoteAlertButton />
           </div>
         </div>
 
@@ -710,90 +702,98 @@ export default function LobbyCam() {
         </div>
       )}
 
-      {/* ═══ MAIN GRID ═══ */}
+      {/* ═══ MAIN GRID ═══
+          Two postures. RESEARCH (the Level-3 default): the page is a dig-up-the-
+          dirt tool — conflicts lead, any member is one search away, and the floor
+          gets a single quiet-status strip instead of dead vote boxes. LIVE VOTE:
+          the floor takes the lead column back and the tally machinery renders. */}
       <main id="main-content" className="lc-shell lc-grid px-6 py-4">
-
-        <section className="lc-col-floor" aria-label="Floor activity">
-          <div className="flex items-center justify-between">
-            <h2 className="section-header">On the Floor</h2>
-            <span className="caption">{timeStr}{timeStr ? " — " : ""}Live feed</span>
-          </div>
-          <p className="lc-dek mb-4">What the U.S. Senate is voting on right now — live from GovTrack.</p>
-
-          {hasLiveVote ? (
-            <div className="mb-5">
-              {billNumber && (
-                <p className="text-xs font-semibold tracking-wider mb-1" style={{ color: "var(--muted)" }}>{billNumber}</p>
-              )}
-              <h3 className="serif leading-tight mb-1" style={{ fontSize: 26, fontWeight: 900 }}>{billTitle}</h3>
-              <p className="serif italic mb-2" style={{ fontSize: 15, color: "var(--muted-dark)" }}>{liveVoteMeta!.question}</p>
-              <span className="inline-block px-2 py-0.5 text-xs font-bold uppercase tracking-wider" style={{ background: "var(--red)", color: "#fff", fontSize: 10 }}>
-                {liveVoteMeta!.result}
-              </span>
-              <p className="caption mt-2">Source: GovTrack roll-call — {formatVoteDate(liveVoteMeta!.created)}</p>
-            </div>
-          ) : (
-            <div className="mb-5 p-4" style={{ background: "var(--white-warm)", border: "1px solid var(--rule)" }}>
-              <h3 className="serif leading-tight mb-1" style={{ fontSize: 22, fontWeight: 900 }}>No roll-call vote in progress</h3>
-              <p className="text-sm leading-relaxed mt-1" style={{ color: "var(--muted-body)", fontSize: 13 }}>
-                {voteDataSource === "loading"
-                  ? "Checking the Senate floor for a live roll-call vote…"
-                  : "The Senate isn't holding a recorded floor vote right now. This zone lights up automatically the moment GovTrack reports one. Recent votes are shown below."}
-              </p>
-              <p className="caption mt-2">Source: GovTrack Senate roll-call feed</p>
-            </div>
-          )}
-
-          <FloorMedia hasLiveVote={hasLiveVote} activeChannel={cspanChannel} onChannelChange={setCspanChannel} />
-
-          <div className="grid grid-cols-2 gap-4 mb-5">
-            <VoteColumn label="YEA" votes={yesVotes} flashVote={flashVote} emptyLabel={hasLiveVote ? "Awaiting votes…" : "No live vote"} />
-            <VoteColumn label="NAY" votes={noVotes} flashVote={flashVote} emptyLabel={hasLiveVote ? "Awaiting votes…" : "No live vote"} />
-          </div>
-
-          <div className="p-3" style={{ background: "var(--white-warm)", border: "1px solid var(--rule)" }}>
-            <h4 className="section-header mb-2">Per-Voter Conflict Analysis</h4>
-            <p className="text-sm leading-relaxed" style={{ color: "var(--muted-body)", fontSize: 13 }}>
-              Flagging individual senators&apos; votes against their donors and holdings requires the financial-disclosure pipeline (red tier), which isn&apos;t live yet. Until it is, no conflict is asserted against any named member here — see the FEC-backed donor breakdown under Today&apos;s Conflicts.
-            </p>
-          </div>
-        </section>
-
-        <section className="px-4" style={{ borderRight: "1px solid var(--rule)" }} aria-label="Defense contract wire">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="section-header">Defense Contract Wire</h2>
-            {contracts && contracts.length > 0 && (
-              <span className="inline-block px-2 py-0.5 text-xs font-bold" style={{ background: "var(--blue)", color: "#fff", fontSize: 10 }}>
-                FY2026
-              </span>
-            )}
-          </div>
-          <div className="space-y-2 scrollbar-hide" style={{ maxHeight: 620, overflowY: "auto" }} role="feed">
-            {contractsLoading && (
-              <p className="caption" style={{ padding: "8px 0" }}>Loading live federal contract data…</p>
-            )}
-            {!contractsLoading && contracts && contracts.length > 0 && contracts.map((c) => (
-              <ContractCard key={c.recipient} item={c} max={contractMax} />
-            ))}
-            {!contractsLoading && contracts && contracts.length === 0 && (
-              <div className="p-3" style={{ background: "var(--white-warm)", border: "1px solid var(--rule)" }}>
-                <p className="text-sm font-semibold" style={{ fontSize: 13 }}>Live contract feed unavailable</p>
-                <p className="text-xs mt-1" style={{ color: "var(--muted)", fontSize: 11 }}>
-                  Real FY2026 federal contract totals for major defense primes load here from USASpending.gov. They&apos;ll appear once this deployment can reach the API.
-                </p>
-                <p className="caption mt-2">Source: USASpending.gov</p>
+        {hasLiveVote ? (
+          <>
+            <section className="lc-col-floor" aria-label="Floor activity">
+              <div className="flex items-center justify-between">
+                <h2 className="section-header">On the Floor</h2>
+                <span className="caption">{timeStr}{timeStr ? " — " : ""}Live feed</span>
               </div>
-            )}
-          </div>
-        </section>
+              <p className="lc-dek mb-4">What the U.S. Senate is voting on right now — live from GovTrack.</p>
 
-        <section className="pl-4" aria-label="Today's conflicts">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="section-header">Today&apos;s Conflicts</h2>
-            <span className="caption">FEC PAC money</span>
-          </div>
-          <TodaysConflicts />
-        </section>
+              <div className="mb-5">
+                {billNumber && (
+                  <p className="text-xs font-semibold tracking-wider mb-1" style={{ color: "var(--muted)" }}>{billNumber}</p>
+                )}
+                <h3 className="serif leading-tight mb-1" style={{ fontSize: 26, fontWeight: 900 }}>{billTitle}</h3>
+                <p className="serif italic mb-2" style={{ fontSize: 15, color: "var(--muted-dark)" }}>{liveVoteMeta!.question}</p>
+                <span className="inline-block px-2 py-0.5 text-xs font-bold uppercase tracking-wider" style={{ background: "var(--red)", color: "#fff", fontSize: 10 }}>
+                  {liveVoteMeta!.result}
+                </span>
+                <p className="caption mt-2">Source: GovTrack roll-call — {formatVoteDate(liveVoteMeta!.created)}</p>
+              </div>
+
+              <FloorMedia hasLiveVote={hasLiveVote} activeChannel={cspanChannel} onChannelChange={setCspanChannel} />
+
+              <div className="grid grid-cols-2 gap-4 mb-5">
+                <VoteColumn label="YEA" votes={yesVotes} flashVote={flashVote} emptyLabel="Awaiting votes…" />
+                <VoteColumn label="NAY" votes={noVotes} flashVote={flashVote} emptyLabel="Awaiting votes…" />
+              </div>
+
+              <div className="p-3" style={{ background: "var(--white-warm)", border: "1px solid var(--rule)" }}>
+                <h4 className="section-header mb-2">Per-Voter Conflict Analysis</h4>
+                <p className="text-sm leading-relaxed" style={{ color: "var(--muted-body)", fontSize: 13 }}>
+                  Flagging individual senators&apos; votes against their donors and holdings requires the financial-disclosure pipeline (red tier), which isn&apos;t live yet. Until it is, no conflict is asserted against any named member here — see the FEC-backed donor breakdown under Today&apos;s Conflicts.
+                </p>
+              </div>
+            </section>
+
+            <section className="lc-col-wire" aria-label="Today's conflicts">
+              <div className="flex items-center justify-between">
+                <h2 className="section-header">Today&apos;s Conflicts</h2>
+                <span className="caption">Live FEC PAC money</span>
+              </div>
+              <p className="lc-dek mb-4">Senators ranked by classified industry PAC money.</p>
+              <TodaysConflicts />
+            </section>
+
+            <section className="lc-col-conflicts" aria-label="Investigate a member">
+              <InvestigatePanel />
+            </section>
+          </>
+        ) : (
+          <>
+            <section className="lc-col-floor" aria-label="Today's conflicts">
+              <div className="flex items-center justify-between">
+                <h2 className="section-header">Today&apos;s Conflicts</h2>
+                <span className="caption">Live FEC PAC money</span>
+              </div>
+              <p className="lc-dek mb-4">
+                Who&apos;s taking what: senators ranked by industry PAC money, straight from FEC filings. Open any card to pull the member&apos;s full file.
+              </p>
+              <TodaysConflicts />
+            </section>
+
+            <section className="lc-col-wire" aria-label="Investigate a member">
+              <InvestigatePanel />
+            </section>
+
+            <section className="lc-col-conflicts" aria-label="Floor watch">
+              <div className="flex items-center justify-between">
+                <h2 className="section-header">Floor Watch</h2>
+                <span className="caption">{timeStr}</span>
+              </div>
+              <p className="lc-dek mb-4">Quiet now. Hearings and markups tell you where to look next.</p>
+
+              {/* The one and only quiet-floor notice — the empty vote boxes are gone. */}
+              <div className="mb-4 px-3 py-2 flex items-center gap-2" style={{ background: "var(--white-warm)", border: "1px solid var(--rule)" }}>
+                <span className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: "var(--blue)" }} aria-hidden="true" />
+                <p className="text-xs" style={{ color: "var(--muted-body)", fontSize: 12 }}>
+                  <span className="font-bold uppercase tracking-wider" style={{ fontSize: 10 }}>No active votes</span>
+                  {" — "}the page escalates on its own the moment GovTrack reports a roll-call. Recent votes are in the wire below.
+                </p>
+              </div>
+
+              <FloorMedia hasLiveVote={hasLiveVote} activeChannel={cspanChannel} onChannelChange={setCspanChannel} />
+            </section>
+          </>
+        )}
       </main>
 
       {/* ═══ ARCHIVE BAR — real recent votes ═══ */}
@@ -836,6 +836,35 @@ export default function LobbyCam() {
         )}
       </section>
 
+      {/* ═══ CONTRACT WIRE — real USASpending totals, deliberately below the fold.
+          Background context for the research columns above, not the lead story. */}
+      <section className="lc-shell px-6 pb-8" aria-label="Defense contract wire">
+        <div style={{ borderTop: "1px solid var(--rule)" }} />
+        <div className="flex items-center justify-between mt-4 mb-3">
+          <h2 className="section-header">Defense Contract Wire</h2>
+          <span className="caption">FY2026 · Source: USASpending.gov</span>
+        </div>
+        {contractsLoading && <p className="caption">Loading live federal contract data…</p>}
+        {!contractsLoading && contracts && contracts.length > 0 && (
+          <div className="flex gap-4 overflow-x-auto pb-3 scrollbar-hide" role="feed">
+            {contracts.map((c) => (
+              <div key={c.recipient} className="flex-shrink-0" style={{ width: 280 }}>
+                <ContractCard item={c} max={contractMax} />
+              </div>
+            ))}
+          </div>
+        )}
+        {!contractsLoading && contracts && contracts.length === 0 && (
+          <div className="p-4" style={{ background: "var(--white-warm)", border: "1px solid var(--rule)", maxWidth: 520 }}>
+            <p className="text-sm font-semibold" style={{ fontSize: 13 }}>Live contract feed unavailable</p>
+            <p className="text-xs mt-1" style={{ color: "var(--muted)", fontSize: 11 }}>
+              Real FY2026 federal contract totals for major defense primes load here from USASpending.gov. They&apos;ll appear once this deployment can reach the API.
+            </p>
+            <p className="caption mt-2">Source: USASpending.gov</p>
+          </div>
+        )}
+      </section>
+
       {/* ═══ FOOTER ═══ */}
       <footer className="px-6 py-4 text-center" style={{ borderTop: "1px solid var(--rule)", maxWidth: 1400, margin: "0 auto" }}>
         <p className="caption">
@@ -844,10 +873,6 @@ export default function LobbyCam() {
         <p className="caption mt-1" style={{ fontSize: 9 }}>
           Not affiliated with any government agency. Zones marked &quot;analysis in progress&quot; are awaiting data pipelines that are not yet live; no conflict figures are shown until they can be sourced.
         </p>
-        <div className="mt-3">
-          <p className="section-header mb-1" style={{ fontSize: 10 }}>Get Alerts For Your Representatives</p>
-          <DistrictLookup />
-        </div>
       </footer>
     </div>
   );

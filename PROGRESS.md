@@ -24,7 +24,7 @@ lead with a dead "no vote in progress" box. Instead the whole page has a
 
 | Level | State | Trigger | The page becomes | Status |
 |-------|-------|---------|------------------|--------|
-| **3 · ROUTINE** | floor quiet (the default) | no vote, floor not in session | **Research mode** — PAC money, contract flows, donor→industry conflicts | ✅ working (this is home) |
+| **3 · ROUTINE** | floor quiet (the default) | no vote, floor not in session | **Research mode** — conflicts lead, any member one search away, one quiet-floor strip | ✅ working (this is home) |
 | **2 · ELEVATED** | floor live, no vote | Congress in session / members speaking | **Live floor coverage** + conflict *chyrons* (who's talking, who paid them) | 🟡 scaffolded |
 | **1 · CRITICAL** | recorded vote underway | a GovTrack roll-call is live | **Full spectacle** — play-by-play positions flagged against donors/holdings | 🟡 scaffolded |
 
@@ -60,6 +60,22 @@ Level 3 is what every visitor sees when the floor is quiet (i.e. almost always).
 Goal: make it a genuinely useful **"follow the money"** research tool, not just a
 row of status cards. Tasks in recommended order:
 
+0. **L3 declutter — lead with the dirt** (✅ done). Research mode is now built
+   around what an investigating visitor actually wants:
+   - **Today's Conflicts is the lead column** (real FEC PAC money, ranked).
+   - **"Investigate a Member"** (`components/MemberSearch.tsx`): search the live
+     roster — every current member, both chambers — by name or state and jump
+     straight to their file at `/member/[slug]`. The ZIP → district lookup moved
+     up next to it (out of the footer).
+   - **One "No active votes" strip** replaced the three dead vote zones (the big
+     "no vote in progress" card, the empty YEA/NAY columns, the per-voter
+     scaffold box). The full vote machinery renders *only* during a live
+     roll-call — quiet L3 never shows a zero.
+   - **Defense Contract Wire demoted** below the fold to a horizontal wire under
+     Recent Votes — background context, not the lead story.
+   - **Browser-only "Alert me" scaffold removed** (button + 60s poller +
+     `lib/voteAlert.ts`). A tab-must-be-open notification wasn't a real alert;
+     alerts return server-side in Phase 4.
 1. **Expand donor coverage — `lib/industryMap.ts`** (⬜, highest leverage, lowest
    risk). Only ~70 PAC→industry mappings today, and that's the ceiling for both
    Today's Conflicts and member donor breakdowns. More mappings = more senators
@@ -114,9 +130,10 @@ row of status cards. Tasks in recommended order:
 - **Red-tier data pipeline** (⏸️): Postgres + Python ETL for lobbying disclosures
   (LDA XML, #8/#9) and stock holdings (disclosure PDFs, #10). Prerequisite for
   real per-voter conflict flags and scores.
-- **Alerts** (🟡→⬜): vote/hearing notifications (e.g. Telegram) on top of
-  `/api/votes/live` + `/api/schedule`. Current "Alert me" button is browser-only,
-  tab-must-be-open scaffolding.
+- **Alerts** (⬜): vote/hearing notifications (e.g. Telegram, email) on top of
+  `/api/votes/live` + `/api/schedule`. The old browser-only "Alert me" scaffold
+  was removed from the UI in the L3 declutter — build this server-side or not at
+  all.
 - **Realtime** (⬜): replace on-load polling of `/api/votes/live` with SSE, and
   auto-refresh the level so the page escalates/de-escalates without a reload (the
   60s vote-alert poller can drive this).
@@ -149,13 +166,14 @@ row of status cards. Tasks in recommended order:
 | L | DEFCON threat-level system | 🟡 | Model + banner + L3 live; L1/L2 scaffolded. See §1. |
 | R | Responsive layout | ✅ | 3-col desktop → 2-col tablet → single-column mobile via `lc-grid`/`lc-shell` in `GlobalStyles`. Masthead wraps; `prefers-reduced-motion` honored. |
 | 1 | Next.js app + mockup ported | ✅ | App Router, TS, Tailwind. |
-| 20 | Frontend wired to live data | ✅ | No fabricated constants. Votes → `/api/votes/live` (honest empty state); Defense Contract Wire → `/api/contracts/top`; Recent Senate Votes → `/api/votes/recent`; ticker only from real data. Every zone has a labeled empty state. |
+| 20 | Frontend wired to live data | ✅ | No fabricated constants. Vote machinery renders only during a live roll-call (quiet floor = one "No active votes" strip); Defense Contract Wire → `/api/contracts/top` (below the fold); Recent Senate Votes → `/api/votes/recent`; ticker only from real data. Every zone has a labeled empty state. |
+| — | "Investigate a Member" search | ✅ | `components/MemberSearch.tsx`: live-roster search (name / state code) → `/member/[slug]`. ZIP district lookup sits beside it. |
 | 6/33 | "Today's Conflicts" real data | ✅ | `components/TodaysConflicts.tsx`: real senators + real donor-by-industry (FEC PAC). Queries 25, keeps members with classified PAC money, ranks, shows top 8. Cards link to member pages. Coverage bounded by `lib/industryMap.ts` (Phase 1.1). |
 | 13b | "This Week" schedule | ✅ | `/api/schedule` (Congress.gov) + toggle with the floor feed. Fails closed. Verify live = Phase 1.3. |
 | 13 | Live floor feed | 🟡 | Free gov feeds (House Clerk YouTube embed; Senate webcast link) — C-SPAN needs a pay-TV login. Session detection not automated (→ Phase 2). |
 | 33 | SEO member profile pages | 🟡 | `/member/[slug]` resolves against the live roster with real record links (Bioguide/GovTrack/FEC). Donors/holdings/vote-flags labeled "in progress" → enrich in Phase 1.2. |
 | 27 | Dynamic OG / Twitter tags | 🟡 | `generateMetadata` on member pages (text done; card image is red-tier). |
-| 24/29 | Vote-start alerts | 🟡 | Browser-only scaffolding (tab must be open). Full alerts → Phase 4. |
+| 24/29 | Vote-start alerts | ⬜ | Browser-only scaffold removed in the L3 declutter (a tab-must-be-open notification wasn't a real alert). Real server-side alerts → Phase 4. |
 
 ### Infrastructure
 | # | Item | Status | Notes |
@@ -189,6 +207,7 @@ row of status cards. Tasks in recommended order:
 - **Deep archival plan:** `lobbycambattleplan.md` (original task numbers).
 - **Code map:** `components/LobbyCam.tsx` (dashboard) · `lib/level.ts` +
   `components/LevelBanner.tsx` + `components/levels/*` (DEFCON system) ·
+  `components/MemberSearch.tsx` (member investigation search) ·
   `app/member/[slug]/page.tsx` (member pages) · `app/api/*` (data routes) ·
   `lib/industryMap.ts` (PAC→industry classifier) · `lib/congressLegislators.ts`
   (roster + ID crosswalk) · `app/status/page.tsx` (feed status).
