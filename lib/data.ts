@@ -52,13 +52,26 @@ export const CSPAN_CHANNELS: CspanChannel[] = [
   },
 ];
 
+// One entry per IndustryName in lib/industryMap.ts, keyed uppercase (lookups
+// go through name.toUpperCase()). Muted, newsprint-adjacent hues.
 export const INDUSTRY_COLORS: Record<string, string> = {
   DEFENSE: "var(--blue)",
   PHARMA: "#6B4226",
+  HEALTH: "#8C3B4A",
   ENERGY: "#4A6741",
   FINANCE: "#5C4B8A",
   INSURANCE: "#7A5C3E",
+  "REAL ESTATE": "#9C6B30",
   TECH: "#3D6B7A",
+  TELECOM: "#2E7A68",
+  MEDIA: "#7D3C6E",
+  AGRICULTURE: "#71803B",
+  LABOR: "#99432F",
+  TRANSPORT: "#4A6690",
+  CONSTRUCTION: "#8F762B",
+  MANUFACTURING: "#5B6770",
+  RETAIL: "#A34E62",
+  LAW: "#58506B",
 };
 
 export function formatMoney(n: number): string {

@@ -76,11 +76,18 @@ row of status cards. Tasks in recommended order:
    - **Browser-only "Alert me" scaffold removed** (button + 60s poller +
      `lib/voteAlert.ts`). A tab-must-be-open notification wasn't a real alert;
      alerts return server-side in Phase 4.
-1. **Expand donor coverage — `lib/industryMap.ts`** (⬜, highest leverage, lowest
-   risk). Only ~70 PAC→industry mappings today, and that's the ceiling for both
-   The Money Board and member donor breakdowns. More mappings = more senators
-   surface real money. *Done when:* The Money Board shows a fuller, more varied
-   set of senators and more member pages show donor data.
+1. **Expand donor coverage — `lib/industryMap.ts`** (✅ done). The classifier
+   grew from ~70 rules / 8 industries to **~640 rules / 17 industries** — added
+   Labor (union PACs), Health (providers, distinct from Pharma), Real Estate
+   (the Realtors are the single biggest PAC), Transport, Construction,
+   Manufacturing, Retail, Media, and Law, plus much deeper coverage of the
+   original eight. Scope rule (documented in the file): industry/business/labor
+   money only — party committees, leadership PACs, and ideological PACs stay
+   deliberately unclassified so Money Board rankings and the Conflict Index
+   measure industry conflicts, not party support. First-match-wins ordering
+   hazards are grouped and commented at the top of the rule list (e.g.
+   "occiDENTAL", "petROCHEmical", "corTEVA", "MOSAIC"⊃"SAIC"); every industry
+   now has an entry in `INDUSTRY_COLORS` (`lib/data.ts`).
 2. **Enrich member profile pages with live FEC donors** (✅ done). The FEC
    resolution chain moved to `lib/donors.ts` (shared by `/api/donors` and the
    member pages). `/member/[slug]` now shows, from real cycle-to-date FEC data:
@@ -201,7 +208,7 @@ row of status cards. Tasks in recommended order:
 | 1 | Next.js app + mockup ported | ✅ | App Router, TS, Tailwind. |
 | 20 | Frontend wired to live data | ✅ | No fabricated constants. Vote machinery renders only during a live roll-call (quiet floor = one "No active votes" strip); Defense Contract Wire → `/api/contracts/top` (below the fold); Recent Senate Votes → `/api/votes/recent`; ticker only from real data. Every zone has a labeled empty state. |
 | — | "Investigate a Member" search | ✅ | `components/MemberSearch.tsx`: live-roster search (name / state code) → `/member/[slug]`. ZIP district lookup sits beside it. |
-| 6/33 | "The Money Board" real data | ✅ | `components/MoneyBoard.tsx`: real senators + real donor-by-industry (FEC PAC). Queries 25, keeps members with classified PAC money, ranks, shows top 8. Cards link to member pages. Coverage bounded by `lib/industryMap.ts` (Phase 1.1). |
+| 6/33 | "The Money Board" real data | ✅ | `components/MoneyBoard.tsx`: real senators + real donor-by-industry (FEC PAC). Queries 25, keeps members with classified PAC money, ranks, shows top 8. Cards link to member pages. Coverage now backed by ~640-rule / 17-industry `lib/industryMap.ts` (Phase 1.1 ✅). |
 | 13b | "This Week" schedule | ✅ | `/api/schedule` (Congress.gov) + toggle with the floor feed. Fails closed. Verify live = Phase 1.3. |
 | 13 | Live floor feed | 🟡 | Free gov feeds (House Clerk YouTube embed; Senate webcast link) — C-SPAN needs a pay-TV login. Session detection not automated (→ Phase 2). |
 | 33 | SEO member profile pages | 🟡 | `/member/[slug]`: live roster identity + record links, real FEC donor breakdown w/ named PACs, "The Numbers" stat row, and Conflict Index v0 (`lib/conflictScore.ts`, money inputs live, 3 inputs pending). Holdings/vote-flags still labeled "in progress" (red tier). |
