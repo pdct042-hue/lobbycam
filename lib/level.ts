@@ -9,8 +9,11 @@
 //                       PAC funding, dark money, donor→contract conflicts,
 //                       dug out of public records.
 //   LEVEL 2 · ELEVATED  Congress is in session and members are speaking, but
-//                       no recorded vote. Live coverage of who's on the floor,
-//                       with conflict chyrons: who's talking, and who paid them.
+//                       no recorded vote. Live floor coverage with member
+//                       search at hand and chyrons: the day's committee
+//                       meetings, donor money, and (House only) who's talking.
+//                       Senate speaker ID is deliberately out of scope — no
+//                       free feed exists and we don't do voice recognition.
 //   LEVEL 1 · CRITICAL  A recorded roll-call vote is underway. Full spectacle —
 //                       play-by-play positions as they land, each flagged
 //                       against the member's donors and holdings.
@@ -57,9 +60,9 @@ export const LEVELS: Record<AlertLevel, LevelMeta> = {
     code: "LEVEL 2",
     name: "Elevated",
     color: "#B8860B",
-    headline: "The floor is live — watch who's talking, and who paid for them.",
+    headline: "The floor is live — watch it with the money in view.",
     blurb:
-      "Congress is in session and members are speaking. Live floor coverage with conflict chyrons: who's at the microphone, and the money behind them.",
+      "Congress is in session. Live floor coverage with today's committee meetings on the chyron and any member's money one search away.",
   },
   1: {
     level: 1,

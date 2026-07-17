@@ -25,7 +25,7 @@ lead with a dead "no vote in progress" box. Instead the whole page has a
 | Level | State | Trigger | The page becomes | Status |
 |-------|-------|---------|------------------|--------|
 | **3 · ROUTINE** | floor quiet (the default) | no vote, floor not in session | **Research mode** — conflicts lead, any member one search away, one quiet-floor strip | ✅ working (this is home) |
-| **2 · ELEVATED** | floor live, no vote | Congress in session / members speaking | **Live floor coverage** + conflict *chyrons* (who's talking, who paid them) | 🟡 scaffolded |
+| **2 · ELEVATED** | floor live, no vote | Congress in session / members speaking | **Live floor coverage** + member search at hand + *chyrons*: committee meetings of the day, donor money, House speaker (House only — no Senate speaker ID) | 🟡 scaffolded |
 | **1 · CRITICAL** | recorded vote underway | a GovTrack roll-call is live | **Full spectacle** — play-by-play positions flagged against donors/holdings | 🟡 scaffolded |
 
 - **Banner + meter:** `components/LevelBanner.tsx` (the 3·2·1 meter) is the
@@ -129,15 +129,26 @@ row of status cards. Tasks in recommended order:
   (coarser). Add `/api/floor-status` that parses these and feed it into
   `deriveLevel`. This is what makes the site *escalate on its own* instead of
   only lighting up during a recorded vote.
-- **Current-speaker card + "chyron their ass"** (⬜): **House = feasible now.**
-  The same Clerk Floor Summary XML names members as they're recognized on the
-  floor ("Mr. SMITH of Texas asked...") in near-real-time floor actions. Plan:
-  parse the latest floor action → extract the member name → resolve against the
-  roster (`lib/congressLegislators.ts`) → pull their money via `lib/donors.ts` →
-  render name + top donor industries in the `FloorSessionMode` chyron. **Senate
-  = no free structured speaker feed**; naming the current Senate speaker needs
-  caption/speech-to-text diarization on the webcast (heavy — treat as red-tier).
-  No speaker is ever named from guesswork.
+- **Speaker chyron — House only** (⬜): the same Clerk Floor Summary XML names
+  members as they're recognized on the floor ("Mr. SMITH of Texas asked...") in
+  near-real-time floor actions. Plan: parse the latest floor action → extract
+  the member name → resolve against the roster (`lib/congressLegislators.ts`) →
+  pull their money via `lib/donors.ts` → render name + top donor industries in
+  the `FloorSessionMode` chyron. No speaker is ever named from guesswork.
+- **Senate speaker ID: ❌ DROPPED (decided 2026-07).** There's no free
+  structured "now speaking" feed for the Senate, and we are NOT doing
+  caption/speech-to-text diarization on the webcast. Do not resurrect this.
+- **Committee-meeting chyron — the Senate's L2 centerpiece instead** (⬜): when
+  the floor is in session, run a **big chyron of the day's committee hearings
+  and markups** (already sourced by `/api/schedule`, Congress.gov): committee
+  name, topic, bill refs, time. That's where the money actually moves while the
+  chamber talks. Render it prominently in `FloorSessionMode` above the donor
+  chyron.
+- **L2 layout: search + live feed side by side** (⬜): when the Senate is in
+  session, dock the "Investigate a Member" search (`components/MemberSearch.tsx`)
+  right next to the live floor feed — watch the floor, look up whoever matters,
+  one glance apart. `FloorSessionMode` takes the feed + search; the research
+  grid stays below.
 - **Feed the conflict chyron real FEC data** (🟡): `FloorSessionMode` already
   renders a chyron; pass real donor items from `/api/donors` (the same data
   behind The Money Board) via `chyronItems`.

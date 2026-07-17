@@ -17,10 +17,11 @@ Congress rarely holds a recorded vote at any given moment, so the site doesn't
 lead with a dead "no vote" box. Instead the whole page has a **threat level** that
 escalates with live floor activity:
 
-- **Level 3 · Routine** — the floor is quiet (default). Research mode: PAC money,
-  contract flows, donor conflicts.
-- **Level 2 · Elevated** — floor is in session. Live coverage + conflict chyrons
-  (who's talking, and who paid them).
+- **Level 3 · Routine** — the floor is quiet (default). Research mode: The Money
+  Board, member investigation, contract flows.
+- **Level 2 · Elevated** — floor is in session. Live coverage with member search
+  at hand + chyrons: the day's committee meetings, donor money, and (House only)
+  who's talking.
 - **Level 1 · Critical** — a recorded vote is underway. Full play-by-play spectacle.
 
 Level 3 is the working dashboard today; Levels 1 & 2 are scaffolded (real frames,

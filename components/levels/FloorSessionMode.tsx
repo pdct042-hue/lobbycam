@@ -5,6 +5,12 @@
 // conflict chyrons (TV lower-thirds) underneath them: who's at the microphone,
 // and who paid for them.
 //
+// PLANNED SHAPE (see PROGRESS.md Phase 2): live feed with the member search
+// docked beside it, a BIG chyron of the day's committee hearings/markups
+// (/api/schedule) above the donor chyron, and a House-only current-speaker
+// card from the Clerk's Floor Summary XML. Senate speaker ID is deliberately
+// dropped — no free feed, no voice recognition.
+//
 // SCAFFOLD STATUS: the frame + the chyron RENDERER are built. Two feeds still
 // need wiring (see PROGRESS.md, Phase 2):
 //   1. "Who's speaking now" — floor-session detection + current-speaker feed.
