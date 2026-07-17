@@ -6,7 +6,7 @@
 // and who paid for them.
 //
 // SCAFFOLD STATUS: the frame + the chyron RENDERER are built. Two feeds still
-// need wiring (see docs/LEVELS.md):
+// need wiring (see PROGRESS.md, Phase 2):
 //   1. "Who's speaking now" — floor-session detection + current-speaker feed.
 //      We don't have a reliable free source yet, so this shows a labeled
 //      placeholder rather than guessing.
@@ -77,7 +77,7 @@ export default function FloorSessionMode({
         <span className="lc-scaffold-badge">Scaffold</span>
         <p>
           <strong>Current speaker feed</strong> — the live &ldquo;who&apos;s talking right now&rdquo; card needs a
-          floor-session + speaker source we don&apos;t have wired yet (see <code>docs/LEVELS.md</code>). No speaker is
+          floor-session + speaker source we don&apos;t have wired yet (see <code>PROGRESS.md</code>). No speaker is
           named until it can be sourced.
         </p>
       </div>

@@ -20,7 +20,7 @@
 // live broadcast when the floor heats up — instead of sitting on a dead
 // "no vote in progress" box as the main event.
 //
-// Scaffolding status (see docs/LEVELS.md for the full roadmap):
+// Scaffolding status (see PROGRESS.md for the full roadmap):
 //   - The level MODEL + derivation + banner are built and live.
 //   - LEVEL 3 research mode is the current, working dashboard.
 //   - LEVEL 1 / LEVEL 2 modes are scaffolded shells with honest placeholders
@@ -81,7 +81,7 @@ export interface LevelSignals {
   /**
    * The floor is in session / a member is speaking, but no recorded vote.
    * Drives LEVEL 2. `null` means "unknown" — we can't yet detect this reliably
-   * (see docs/LEVELS.md), and we deliberately do NOT claim the floor is live
+   * (see PROGRESS.md), and we deliberately do NOT claim the floor is live
    * when we're unsure. Fabricating an "elevated" state would violate the
    * no-fake-data rule the whole site is built on.
    */

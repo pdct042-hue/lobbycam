@@ -9,7 +9,7 @@
 // are built. The per-position conflict flags ("voted YEA — took $X from the
 // industry that wins if this passes") need the red-tier donor+holdings pipeline
 // and are shown as a labeled placeholder, not faked. The actual YEA/NAY tallies
-// continue to render live in the routine grid below. See docs/LEVELS.md.
+// continue to render live in the routine grid below. See PROGRESS.md (Phase 3).
 
 export interface LiveVoteBroadcastMeta {
   billNumber: string | null;
@@ -64,7 +64,7 @@ export default function LiveVoteBroadcast({
         <p>
           <strong>Play-by-play conflict flags</strong> — as each senator&apos;s position lands, this strip will call the
           money: &ldquo;voted YEA · took $X from the industry that wins if this passes.&rdquo; That needs the red-tier
-          donor + stock-holdings pipeline (see <code>docs/LEVELS.md</code>). Until it&apos;s live, no conflict is asserted
+          donor + stock-holdings pipeline (see <code>PROGRESS.md</code>). Until it&apos;s live, no conflict is asserted
           against any named member — the real YEA/NAY tally streams below.
         </p>
       </div>

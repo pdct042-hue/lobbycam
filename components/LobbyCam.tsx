@@ -607,7 +607,7 @@ export default function LobbyCam() {
 
   // Floor-session detection (Level 2) isn't wired to a reliable feed yet, so
   // it's `null` (unknown) — we never claim the floor is live when unsure.
-  // See docs/LEVELS.md for the signal roadmap.
+  // See PROGRESS.md (Phase 2) for the signal roadmap.
   const floorInSession: boolean | null = null;
   const level: AlertLevel = levelOverride ?? deriveLevel({ liveVote: hasLiveVote, floorInSession });
   const levelMeta = LEVELS[level];
@@ -698,7 +698,7 @@ export default function LobbyCam() {
           When the floor heats up, the active mode takes over above the routine
           grid. LEVEL 3 shows nothing here — the grid below is the whole show.
           These are scaffolds: the frames are real, the spectacle features carry
-          honest "not built yet" labels (see docs/LEVELS.md). */}
+          honest "not built yet" labels (see PROGRESS.md). */}
       {level === 1 && (
         <div className="lc-shell">
           <LiveVoteBroadcast vote={liveVoteMeta} />

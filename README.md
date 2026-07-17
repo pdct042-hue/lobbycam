@@ -25,8 +25,8 @@ escalates with live floor activity:
 
 Level 3 is the working dashboard today; Levels 1 & 2 are scaffolded (real frames,
 honestly-labeled placeholders for the not-yet-built spectacle features). Preview
-any level with `?level=1|2|3`. Model in `lib/level.ts`; full roadmap in
-**`docs/LEVELS.md`**.
+any level with `?level=1|2|3`. Model in `lib/level.ts`; full roadmap and the
+current build plan in **`PROGRESS.md`**.
 
 ## Data feeds
 
@@ -73,7 +73,7 @@ cp .env.example .env.local   # optional: add API keys to test live feeds
 ## Project layout
 
 - `app/page.tsx` / `components/LobbyCam.tsx` — the dashboard UI
-- `lib/level.ts` / `components/LevelBanner.tsx` / `components/levels/*` — the DEFCON threat-level system (see `docs/LEVELS.md`)
+- `lib/level.ts` / `components/LevelBanner.tsx` / `components/levels/*` — the DEFCON threat-level system (roadmap in `PROGRESS.md`)
 - `app/member/[slug]/page.tsx` — SEO member profile pages
 - `app/status/page.tsx` — data-feed status
 - `app/api/*` — the data routes above
@@ -83,4 +83,5 @@ cp .env.example .env.local   # optional: add API keys to test live feeds
 - `lib/congressLegislators.ts` — roster loader + ID crosswalk
 - `lib/http.ts` — shared timeout/caching fetch helper
 - `docs/ENV_SETUP.md` — non-coder guide to getting API keys into Railway
-- `PROGRESS.md` — battle-plan progress tracker
+- `PROGRESS.md` — **the master plan & progress tracker** (single source of truth: DEFCON levels, current state, phased build plan)
+- `lobbycambattleplan.md` — deep archival plan (original task numbers)
